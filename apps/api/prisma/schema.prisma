@@ -1,0 +1,335 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Multi-tenancy ─────────────────────────────────────────────────────────────
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  providerConnections ProviderConnection[]
+  stores              Store[]
+  categories          Category[]
+  items               Item[]
+  employees           Employee[]
+  customers           Customer[]
+  paymentTypes        PaymentType[]
+  receipts            Receipt[]
+  shifts              Shift[]
+  expenses            Expense[]
+  syncEvents          SyncEvent[]
+
+  @@map("tenants")
+}
+
+model ProviderConnection {
+  id            String    @id @default(uuid())
+  tenantId      String    @map("tenant_id")
+  providerId    String    @map("provider_id")      // 'loyverse' | 'square' | 'ifood'
+  displayName   String    @map("display_name")
+  credentials   Json                               // { access_token, webhook_secret, ... }
+  status        String    @default("active")       // active | paused | error
+  lastSyncAt    DateTime? @map("last_sync_at")
+  lastSyncError String?   @map("last_sync_error")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, providerId])
+  @@map("provider_connections")
+}
+
+// ── Catálogo ──────────────────────────────────────────────────────────────────
+
+model Store {
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  providerId   String   @map("provider_id")
+  externalId   String   @map("external_id")
+  name         String
+  timezone     String   @default("America/Sao_Paulo")
+  currencyCode String   @default("BRL") @map("currency_code")
+  address      String?
+  syncedAt     DateTime? @map("synced_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  receipts Receipt[]
+  shifts   Shift[]
+  expenses Expense[]
+  inventoryLevels InventoryLevel[]
+
+  @@unique([tenantId, providerId, externalId])
+  @@map("stores")
+}
+
+model Category {
+  id         String  @id @default(uuid())
+  tenantId   String  @map("tenant_id")
+  providerId String  @map("provider_id")
+  externalId String  @map("external_id")
+  name       String
+  color      String?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  items  Item[]
+
+  @@unique([tenantId, providerId, externalId])
+  @@map("categories")
+}
+
+model Item {
+  id         String    @id @default(uuid())
+  tenantId   String    @map("tenant_id")
+  providerId String    @map("provider_id")
+  externalId String    @map("external_id")
+  name       String
+  categoryId String?   @map("category_id")
+  trackStock Boolean   @default(false) @map("track_stock")
+  updatedAt  DateTime? @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  category Category? @relation(fields: [categoryId], references: [id])
+  variants Variant[]
+
+  @@unique([tenantId, providerId, externalId])
+  @@map("items")
+}
+
+model Variant {
+  id         String  @id @default(uuid())
+  tenantId   String  @map("tenant_id")
+  providerId String  @map("provider_id")
+  externalId String  @map("external_id")
+  itemId     String  @map("item_id")
+  sku        String?
+  name       String
+  price      Int     @default(0)  // centavos
+  cost       Int?                 // CMV em centavos
+
+  item            Item             @relation(fields: [itemId], references: [id])
+  inventoryLevels InventoryLevel[]
+  lineItems       ReceiptLineItem[]
+
+  @@unique([tenantId, providerId, externalId])
+  @@map("variants")
+}
+
+model InventoryLevel {
+  id                String   @id @default(uuid())
+  variantId         String   @map("variant_id")
+  storeId           String   @map("store_id")
+  inStock           Decimal  @map("in_stock") @db.Decimal(10, 3)
+  lowStockThreshold Decimal? @map("low_stock") @db.Decimal(10, 3)
+  updatedAt         DateTime @default(now()) @map("updated_at")
+
+  variant Variant @relation(fields: [variantId], references: [id])
+  store   Store   @relation(fields: [storeId], references: [id])
+
+  @@unique([variantId, storeId])
+  @@map("inventory_levels")
+}
+
+// ── Pessoas ───────────────────────────────────────────────────────────────────
+
+model Employee {
+  id         String    @id @default(uuid())
+  tenantId   String    @map("tenant_id")
+  providerId String    @map("provider_id")
+  externalId String    @map("external_id")
+  name       String
+  role       String    // owner | manager | cashier | staff
+  email      String?
+  deletedAt  DateTime? @map("deleted_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  receipts Receipt[]
+  shifts   Shift[]
+
+  @@unique([tenantId, providerId, externalId])
+  @@map("employees")
+}
+
+model Customer {
+  id          String    @id @default(uuid())
+  tenantId    String    @map("tenant_id")
+  providerId  String    @map("provider_id")
+  externalId  String    @map("external_id")
+  name        String?
+  email       String?
+  phone       String?
+  firstVisit  DateTime? @map("first_visit")
+  lastVisit   DateTime? @map("last_visit")
+  totalVisits Int?      @map("total_visits")
+  totalSpent  Int?      @map("total_spent")  // centavos
+  deletedAt   DateTime? @map("deleted_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  receipts Receipt[]
+
+  @@unique([tenantId, providerId, externalId])
+  @@map("customers")
+}
+
+model PaymentType {
+  id         String @id @default(uuid())
+  tenantId   String @map("tenant_id")
+  providerId String @map("provider_id")
+  externalId String @map("external_id")
+  name       String
+  type       String // cash | credit_card | debit_card | pix | voucher | other
+
+  tenant   Tenant           @relation(fields: [tenantId], references: [id])
+  payments ReceiptPayment[]
+
+  @@unique([tenantId, providerId, externalId])
+  @@map("payment_types")
+}
+
+// ── Transações ────────────────────────────────────────────────────────────────
+
+model Shift {
+  id                  String    @id @default(uuid())
+  tenantId            String    @map("tenant_id")
+  providerId          String    @map("provider_id")
+  externalId          String    @map("external_id")
+  storeId             String    @map("store_id")
+  employeeId          String?   @map("employee_id")
+  openedAt            DateTime  @map("opened_at")
+  closedAt            DateTime? @map("closed_at")
+  openingCashAmount   Int       @default(0) @map("opening_cash_amount")
+  cashReceived        Int       @default(0) @map("cash_received")
+  cashPaidIn          Int       @default(0) @map("cash_paid_in")
+  cashPaidOut         Int       @default(0) @map("cash_paid_out")
+  cashRefunds         Int       @default(0) @map("cash_refunds")
+  expectedCashAmount  Int       @default(0) @map("expected_cash_amount")
+  actualCashAmount    Int?      @map("actual_cash_amount")
+  cashDifference      Int?      @map("cash_difference")
+  receiptsCount       Int       @default(0) @map("receipts_count")
+  netTotal            Int       @default(0) @map("net_total")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  store    Store     @relation(fields: [storeId], references: [id])
+  employee Employee? @relation(fields: [employeeId], references: [id])
+  receipts Receipt[]
+
+  @@unique([tenantId, providerId, externalId])
+  @@map("shifts")
+}
+
+model Receipt {
+  id            String    @id @default(uuid())
+  tenantId      String    @map("tenant_id")
+  providerId    String    @map("provider_id")
+  externalId    String    @map("external_id")
+  type          String                          // sale | refund
+  storeId       String    @map("store_id")
+  employeeId    String?   @map("employee_id")
+  customerId    String?   @map("customer_id")
+  shiftId       String?   @map("shift_id")
+  subtotal      Int       @default(0)
+  totalDiscount Int       @default(0) @map("total_discount")
+  totalTax      Int       @default(0) @map("total_tax")
+  totalAmount   Int       @default(0) @map("total_amount")
+  diningOption  String?   @map("dining_option")
+  note          String?
+  cancelledAt   DateTime? @map("cancelled_at")
+  createdAt     DateTime  @map("created_at")
+  updatedAt     DateTime  @map("updated_at")
+  syncedAt      DateTime  @default(now()) @map("synced_at")
+
+  tenant    Tenant           @relation(fields: [tenantId], references: [id])
+  store     Store            @relation(fields: [storeId], references: [id])
+  employee  Employee?        @relation(fields: [employeeId], references: [id])
+  customer  Customer?        @relation(fields: [customerId], references: [id])
+  shift     Shift?           @relation(fields: [shiftId], references: [id])
+  lineItems ReceiptLineItem[]
+  payments  ReceiptPayment[]
+
+  @@unique([tenantId, providerId, externalId])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, storeId, createdAt])
+  @@map("receipts")
+}
+
+model ReceiptLineItem {
+  id          String   @id @default(uuid())
+  receiptId   String   @map("receipt_id")
+  itemId      String?  @map("item_id")
+  variantId   String?  @map("variant_id")
+  itemName    String   @map("item_name")   // denormalizado — preserva histórico
+  variantName String?  @map("variant_name")
+  quantity    Decimal  @db.Decimal(10, 3)
+  unitPrice   Int      @map("unit_price")
+  totalPrice  Int      @map("total_price")
+  unitCost    Int?     @map("unit_cost")
+  totalCost   Int?     @map("total_cost")
+  discount    Int?
+  tax         Int?
+
+  receipt Receipt  @relation(fields: [receiptId], references: [id])
+  variant Variant? @relation(fields: [variantId], references: [id])
+
+  @@map("receipt_line_items")
+}
+
+model ReceiptPayment {
+  id                  String    @id @default(uuid())
+  receiptId           String    @map("receipt_id")
+  paymentTypeId       String?   @map("payment_type_id")
+  paymentTypeName     String    @map("payment_type_name")     // denormalizado
+  paymentTypeCategory String    @map("payment_type_category") // cash | credit_card | pix | etc.
+  amount              Int
+  paidAt              DateTime? @map("paid_at")
+
+  receipt     Receipt      @relation(fields: [receiptId], references: [id])
+  paymentType PaymentType? @relation(fields: [paymentTypeId], references: [id])
+
+  @@map("receipt_payments")
+}
+
+// ── Despesas manuais ──────────────────────────────────────────────────────────
+
+model Expense {
+  id            String   @id @default(uuid())
+  tenantId      String   @map("tenant_id")
+  storeId       String?  @map("store_id")   // null = despesa geral do negócio
+  category      String                       // rent | salary | utilities | other
+  description   String
+  amount        Int                          // centavos
+  recurrence    String   @default("one_time") // one_time | monthly | weekly
+  referenceDate DateTime @map("reference_date") @db.Date
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  store  Store? @relation(fields: [storeId], references: [id])
+
+  @@map("expenses")
+}
+
+// ── Log de sync ───────────────────────────────────────────────────────────────
+
+model SyncEvent {
+  id                 String    @id @default(uuid())
+  tenantId           String    @map("tenant_id")
+  providerId         String    @map("provider_id")
+  eventType          String    @map("event_type")
+  externalResourceId String    @map("external_resource_id")
+  rawPayload         Json      @map("raw_payload")
+  processed          Boolean   @default(false)
+  processedAt        DateTime? @map("processed_at")
+  error              String?
+  receivedAt         DateTime  @default(now()) @map("received_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@map("sync_events")
+}
