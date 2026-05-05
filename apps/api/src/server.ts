@@ -4,7 +4,11 @@ import { DatabaseService } from './lib/db/database.service.js';
 import { AuthService } from './lib/auth/auth.service.js';
 import { ProviderRegistry } from './lib/providers/registry.js';
 import { SyncService } from './modules/sync/sync.service.js';
-import { dashboardRoutes } from './modules/dashboard/dashboard.routes.js';
+import { dashboardRoutes }  from './modules/dashboard/dashboard.routes.js';
+import { inventoryRoutes }  from './modules/inventory/inventory.routes.js';
+import { cashflowRoutes }   from './modules/cashflow/cashflow.routes.js';
+import { dreRoutes }        from './modules/dre/dre.routes.js';
+import { receiptsRoutes }   from './modules/receipts/receipts.routes.js';
 import {
   providerEventQueue,
   startEventWorker,
@@ -116,8 +120,12 @@ app.post('/providers/sync', { preHandler: requireAuth }, async (req: any, reply)
   return { message: 'Sync incremental iniciado' };
 });
 
-// ── Dashboard routes ──────────────────────────────────────────────────────────
+// ── Routes ────────────────────────────────────────────────────────────────────
 await app.register(dashboardRoutes, { prefix: '/api/dashboard', preHandler: requireAuth });
+await app.register(inventoryRoutes, { prefix: '/api/inventory', preHandler: requireAuth });
+await app.register(cashflowRoutes,  { prefix: '/api/cashflow',  preHandler: requireAuth });
+await app.register(dreRoutes,       { prefix: '/api/dre',       preHandler: requireAuth });
+await app.register(receiptsRoutes,  { prefix: '/api/receipts',  preHandler: requireAuth });
 
 // ── Webhook receiver (agnóstico) ──────────────────────────────────────────────
 app.post<{ Params: { providerId: string } }>('/api/webhooks/:providerId', async (req, reply) => {

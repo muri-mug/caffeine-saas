@@ -39,6 +39,10 @@ export { RefreshCw }       from 'lucide-react'; // Atualizar
 export { Filter }          from 'lucide-react'; // Filtros
 export { Search }          from 'lucide-react'; // Busca
 export { ChevronDown }     from 'lucide-react'; // Dropdowns
+export { ChevronUp }       from 'lucide-react'; // Expand/collapse
+export { ChevronLeft }     from 'lucide-react'; // Pagination prev
+export { ChevronRight }    from 'lucide-react'; // Pagination next
+export { ShoppingBag }     from 'lucide-react'; // Vendas / Recibos alt
 export { MoreHorizontal }  from 'lucide-react'; // Menu de ações
 export { ExternalLink }    from 'lucide-react'; // Link externo
 export { Copy }            from 'lucide-react'; // Copiar
