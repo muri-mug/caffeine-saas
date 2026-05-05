@@ -189,8 +189,9 @@ export default function ConfiguracoesPage() {
       <Section title={t.company}>
         <form onSubmit={handleSaveName} className="flex gap-3 items-end">
           <div className="flex-1 space-y-1">
-            <label className="text-xs text-muted-foreground">{t.companyName}</label>
+            <label htmlFor="company-name" className="text-xs text-muted-foreground">{t.companyName}</label>
             <input
+              id="company-name"
               type="text"
               required
               value={companyName}
@@ -215,8 +216,9 @@ export default function ConfiguracoesPage() {
       <Section title={t.security}>
         <form onSubmit={handleChangePassword} className="space-y-3">
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">{t.currentPassword}</label>
+            <label htmlFor="current-password" className="text-xs text-muted-foreground">{t.currentPassword}</label>
             <input
+              id="current-password"
               type="password"
               required
               value={currentPwd}
@@ -225,8 +227,9 @@ export default function ConfiguracoesPage() {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">{t.newPassword}</label>
+            <label htmlFor="new-password" className="text-xs text-muted-foreground">{t.newPassword}</label>
             <input
+              id="new-password"
               type="password"
               required
               minLength={6}
@@ -236,8 +239,9 @@ export default function ConfiguracoesPage() {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">{t.confirmPassword}</label>
+            <label htmlFor="confirm-password" className="text-xs text-muted-foreground">{t.confirmPassword}</label>
             <input
+              id="confirm-password"
               type="password"
               required
               minLength={6}
