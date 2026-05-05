@@ -48,6 +48,7 @@ export { ExternalLink }    from 'lucide-react'; // Link externo
 export { Copy }            from 'lucide-react'; // Copiar
 export { Loader2 }         from 'lucide-react'; // Loading spinner (animate-spin)
 export { Menu }            from 'lucide-react'; // Menu mobile
+export { LogOut }          from 'lucide-react'; // Logout
 
 // ── Status / Feedback ─────────────────────────────────────────────────────────
 export { CheckCircle }  from 'lucide-react'; // Sucesso

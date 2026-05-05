@@ -1,3 +1,7 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Sidebar } from './sidebar';
 import { Topbar } from './topbar';
 
@@ -7,6 +11,15 @@ interface DashboardShellProps {
 }
 
 export function DashboardShell({ children, header }: DashboardShellProps) {
+  const router = useRouter();
+
+  useEffect(() => {
+    const token = localStorage.getItem('sarta_token');
+    if (!token) {
+      router.replace('/login');
+    }
+  }, [router]);
+
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar />
