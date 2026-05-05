@@ -7,6 +7,7 @@ import { KpiCard } from '@/components/financial/kpi-card';
 import { PeriodSelector } from '@/components/financial/period-selector';
 import { TopProductsTable } from '@/components/financial/top-products-table';
 import { TrendingUp, Receipt, CreditCard, Percent } from '@/lib/icons';
+import { useT } from '@/lib/i18n';
 import {
   useDashboardOverview,
   useHourlyRevenue,
@@ -26,6 +27,7 @@ const PaymentDonutChart = dynamic(
 
 export default function DashboardPage() {
   const [period, setPeriod] = useState<Period>('month');
+  const t = useT();
 
   const { data: overview, loading: loadingOverview } = useDashboardOverview(period);
   const { data: hourly,   loading: loadingHourly }   = useHourlyRevenue(period);
@@ -33,10 +35,10 @@ export default function DashboardPage() {
   const { data: products, loading: loadingProducts } = useTopProducts(period);
 
   const periodLabel = {
-    today:     'vs. ontem',
-    yesterday: 'vs. anteontem',
-    week:      'vs. semana anterior',
-    month:     'vs. mês anterior',
+    today:     t.dashboard.vsYesterday,
+    yesterday: t.dashboard.vsDayBefore,
+    week:      t.dashboard.vsPrevWeek,
+    month:     t.dashboard.vsPrevMonth,
   }[period];
 
   return (
@@ -44,9 +46,9 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Visão geral</h1>
+          <h1 className="text-2xl font-semibold text-foreground">{t.dashboard.title}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            {new Date().toLocaleDateString(t.locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
         </div>
         <PeriodSelector value={period} onChange={setPeriod} />
@@ -55,7 +57,7 @@ export default function DashboardPage() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
-          title="Receita bruta"
+          title={t.dashboard.grossRevenue}
           value={overview?.revenue ?? 0}
           deltaPercent={overview?.revenueDelta}
           deltaLabel={periodLabel}
@@ -64,7 +66,7 @@ export default function DashboardPage() {
           loading={loadingOverview}
         />
         <KpiCard
-          title="Nº de vendas"
+          title={t.dashboard.salesCount}
           value={overview?.transactionsCount ?? 0}
           deltaPercent={overview?.transactionsDelta}
           deltaLabel={periodLabel}
@@ -73,7 +75,7 @@ export default function DashboardPage() {
           loading={loadingOverview}
         />
         <KpiCard
-          title="Ticket médio"
+          title={t.dashboard.avgTicket}
           value={overview?.avgTicket ?? 0}
           deltaPercent={overview?.avgTicketDelta}
           deltaLabel={periodLabel}
@@ -82,7 +84,7 @@ export default function DashboardPage() {
           loading={loadingOverview}
         />
         <KpiCard
-          title="Margem bruta"
+          title={t.dashboard.grossMargin}
           value={overview?.grossMarginPct ?? 0}
           icon={Percent}
           format="percent"
@@ -113,14 +115,14 @@ export default function DashboardPage() {
         </div>
         <div>
           <Card>
-            <p className="text-base font-semibold text-foreground mb-4">Resumo financeiro</p>
+            <p className="text-base font-semibold text-foreground mb-4">{t.dashboard.financialSummary}</p>
             <div className="space-y-3">
               {[
-                { label: 'Receita líquida',  value: overview?.revenueNet,      color: 'text-positive' },
-                { label: 'CMV total',         value: overview?.costTotal,       color: 'text-negative' },
-                { label: 'Lucro bruto',       value: overview?.grossProfit,     color: 'text-positive' },
-                { label: 'Devoluções',        value: overview?.refundsTotal,    color: 'text-negative' },
-                { label: 'Descontos',         value: overview?.discountsTotal,  color: 'text-warning'  },
+                { label: t.dashboard.netRevenue,  value: overview?.revenueNet,     color: 'text-positive' },
+                { label: t.dashboard.totalCogs,   value: overview?.costTotal,      color: 'text-negative' },
+                { label: t.dashboard.grossProfit, value: overview?.grossProfit,    color: 'text-positive' },
+                { label: t.dashboard.refunds,     value: overview?.refundsTotal,   color: 'text-negative' },
+                { label: t.dashboard.discounts,   value: overview?.discountsTotal, color: 'text-warning'  },
               ].map((row) => (
                 <div key={row.label} className="flex items-center justify-between py-1.5 border-b border-border last:border-0">
                   <span className="text-sm text-muted-foreground">{row.label}</span>
@@ -129,7 +131,7 @@ export default function DashboardPage() {
                   ) : (
                     <span className={`text-sm financial-value font-medium ${row.color}`}>
                       {row.value != null
-                        ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((row.value) / 100)
+                        ? new Intl.NumberFormat(t.locale, { style: 'currency', currency: 'BRL' }).format((row.value) / 100)
                         : '—'}
                     </span>
                   )}

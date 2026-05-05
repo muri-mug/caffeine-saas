@@ -5,6 +5,7 @@ import { Card } from '@tremor/react';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { useT } from '@/lib/i18n';
 import { PeriodSelector } from '@/components/financial/period-selector';
 import { ShoppingBag, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from '@/lib/icons';
 import type { Period } from '@/hooks/use-dashboard';
@@ -49,11 +50,8 @@ interface ReceiptsData {
   pagination: Pagination;
 }
 
-const paymentCategoryLabel: Record<string, string> = {
-  cash: 'Dinheiro', card: 'Cartão', voucher: 'Voucher', other: 'Outro',
-};
-
-function ReceiptRow({ receipt }: { receipt: Receipt }) {
+function ReceiptRow({ receipt, locale, paymentLabel, saleLabel, refundLabel, itemLabel, itemsLabel }:
+  { receipt: Receipt; locale: string; paymentLabel: (cat: string, name: string) => string; saleLabel: string; refundLabel: string; itemLabel: string; itemsLabel: string }) {
   const [expanded, setExpanded] = useState(false);
   const date = new Date(receipt.createdAt);
   const isRefund = receipt.type === 'refund';
@@ -67,10 +65,10 @@ function ReceiptRow({ receipt }: { receipt: Receipt }) {
       >
         <td className="px-4 py-3 whitespace-nowrap">
           <p className="text-sm text-foreground">
-            {date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+            {date.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: '2-digit' })}
           </p>
           <p className="text-xs text-muted-foreground">
-            {date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            {date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
           </p>
         </td>
         <td className="px-4 py-3">
@@ -78,7 +76,7 @@ function ReceiptRow({ receipt }: { receipt: Receipt }) {
             'inline-flex px-2 py-0.5 rounded-full text-xs font-medium',
             isRefund ? 'bg-negative/10 text-negative' : 'bg-positive/10 text-positive',
           )}>
-            {isRefund ? 'Estorno' : 'Venda'}
+            {isRefund ? refundLabel : saleLabel}
           </span>
         </td>
         <td className="px-4 py-3 text-right">
@@ -88,7 +86,7 @@ function ReceiptRow({ receipt }: { receipt: Receipt }) {
         </td>
         <td className="px-4 py-3 text-sm text-muted-foreground">
           {primaryPayment
-            ? paymentCategoryLabel[primaryPayment.paymentTypeCategory] ?? primaryPayment.paymentTypeName
+            ? paymentLabel(primaryPayment.paymentTypeCategory, primaryPayment.paymentTypeName)
             : '—'}
           {receipt.payments.length > 1 && (
             <span className="text-xs ml-1">(+{receipt.payments.length - 1})</span>
@@ -98,7 +96,7 @@ function ReceiptRow({ receipt }: { receipt: Receipt }) {
           {receipt.employee?.name ?? '—'}
         </td>
         <td className="px-4 py-3 text-right text-sm text-muted-foreground">
-          {receipt.lineItems.length} {receipt.lineItems.length === 1 ? 'item' : 'itens'}
+          {receipt.lineItems.length} {receipt.lineItems.length === 1 ? itemLabel : itemsLabel}
         </td>
         <td className="px-4 py-3">
           {expanded
@@ -114,7 +112,7 @@ function ReceiptRow({ receipt }: { receipt: Receipt }) {
                 <div key={i} className="flex items-center justify-between text-xs">
                   <span className="text-foreground">
                     {item.itemName}
-                    {item.variantName !== 'Padrão' && (
+                    {item.variantName !== 'Padrão' && item.variantName !== 'Default' && (
                       <span className="text-muted-foreground ml-1">({item.variantName})</span>
                     )}
                   </span>
@@ -129,7 +127,7 @@ function ReceiptRow({ receipt }: { receipt: Receipt }) {
                   {receipt.payments.map((p, i) => (
                     <div key={i} className="flex items-center justify-between text-xs">
                       <span className="text-muted-foreground">
-                        {paymentCategoryLabel[p.paymentTypeCategory] ?? p.paymentTypeName}
+                        {paymentLabel(p.paymentTypeCategory, p.paymentTypeName)}
                       </span>
                       <span className="financial-value text-foreground">{formatCurrency(p.amount)}</span>
                     </div>
@@ -149,6 +147,14 @@ export default function VendasPage() {
   const [data, setData]       = useState<ReceiptsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage]       = useState(1);
+  const t = useT();
+
+  const paymentCategoryLabel: Record<string, string> = {
+    cash: t.sales.cash, card: t.sales.card, voucher: t.sales.voucher, other: t.sales.other,
+  };
+
+  const getPaymentLabel = (cat: string, name: string) =>
+    paymentCategoryLabel[cat] ?? name;
 
   const fetchData = useCallback((p: number) => {
     setLoading(true);
@@ -173,12 +179,17 @@ export default function VendasPage() {
 
   const pg = data?.pagination;
 
+  const tableHeaders = [
+    t.sales.dateTime, t.sales.type, t.sales.total,
+    t.sales.payment, t.sales.employee, t.sales.items, '',
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Vendas</h1>
-          <p className="text-sm text-muted-foreground mt-1">Histórico de transações</p>
+          <h1 className="text-2xl font-semibold text-foreground">{t.sales.title}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t.sales.subtitle}</p>
         </div>
         <PeriodSelector value={period} onChange={setPeriod} />
       </div>
@@ -187,11 +198,11 @@ export default function VendasPage() {
         <div className="px-4 py-3 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-            <p className="text-base font-semibold text-foreground">Recibos</p>
+            <p className="text-base font-semibold text-foreground">{t.sales.receipts}</p>
           </div>
           {pg && (
             <p className="text-xs text-muted-foreground">
-              {pg.total.toLocaleString('pt-BR')} transações
+              {pg.total.toLocaleString(t.locale)} {t.sales.transactions}
             </p>
           )}
         </div>
@@ -204,7 +215,7 @@ export default function VendasPage() {
           </div>
         ) : !data?.receipts.length ? (
           <div className="py-16 text-center text-sm text-muted-foreground">
-            Nenhuma transação encontrada neste período
+            {t.sales.noTransactions}
           </div>
         ) : (
           <>
@@ -212,10 +223,10 @@ export default function VendasPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border bg-muted/50">
-                    {['Data/Hora', 'Tipo', 'Total', 'Pagamento', 'Funcionário', 'Itens', ''].map((h) => (
-                      <th key={h} className={cn(
+                    {tableHeaders.map((h, i) => (
+                      <th key={i} className={cn(
                         'text-xs font-medium text-muted-foreground px-4 py-3 whitespace-nowrap',
-                        h === 'Total' || h === 'Itens' ? 'text-right' : 'text-left',
+                        h === t.sales.total || h === t.sales.items ? 'text-right' : 'text-left',
                       )}>
                         {h}
                       </th>
@@ -224,7 +235,16 @@ export default function VendasPage() {
                 </thead>
                 <tbody>
                   {data.receipts.map((receipt) => (
-                    <ReceiptRow key={receipt.id} receipt={receipt} />
+                    <ReceiptRow
+                      key={receipt.id}
+                      receipt={receipt}
+                      locale={t.locale}
+                      paymentLabel={getPaymentLabel}
+                      saleLabel={t.sales.sale}
+                      refundLabel={t.sales.refund}
+                      itemLabel={t.sales.item}
+                      itemsLabel={t.sales.items_plural}
+                    />
                   ))}
                 </tbody>
               </table>
@@ -233,7 +253,7 @@ export default function VendasPage() {
             {pg && pg.totalPages > 1 && (
               <div className="flex items-center justify-between px-4 py-3 border-t border-border">
                 <p className="text-xs text-muted-foreground">
-                  Página {pg.page} de {pg.totalPages}
+                  {t.sales.page} {pg.page} {t.sales.of} {pg.totalPages}
                 </p>
                 <div className="flex items-center gap-1">
                   <button

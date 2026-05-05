@@ -2,60 +2,10 @@
 
 import { useState, useEffect, FormEvent } from 'react';
 import { useSettings } from '@/lib/settings-context';
+import { useT } from '@/lib/i18n';
 import { api } from '@/lib/api';
 import { Moon, Sun } from '@/lib/icons';
 
-// ── Translations ──────────────────────────────────────────────────────────────
-const T = {
-  pt: {
-    title:            'Configurações',
-    appearance:       'Aparência',
-    darkMode:         'Modo escuro',
-    darkModeDesc:     'Alterna entre tema claro e escuro.',
-    language:         'Idioma',
-    languageDesc:     'Escolha o idioma da interface.',
-    langPt:           'Português',
-    langEn:           'English',
-    company:          'Empresa',
-    companyName:      'Nome da empresa',
-    save:             'Salvar',
-    saving:           'Salvando…',
-    saved:            'Salvo!',
-    security:         'Segurança',
-    currentPassword:  'Senha atual',
-    newPassword:      'Nova senha',
-    confirmPassword:  'Confirmar nova senha',
-    changePassword:   'Alterar senha',
-    passwordChanged:  'Senha alterada com sucesso!',
-    passwordMismatch: 'As senhas não coincidem.',
-    errorGeneric:     'Ocorreu um erro. Tente novamente.',
-  },
-  en: {
-    title:            'Settings',
-    appearance:       'Appearance',
-    darkMode:         'Dark mode',
-    darkModeDesc:     'Switch between light and dark theme.',
-    language:         'Language',
-    languageDesc:     'Choose the interface language.',
-    langPt:           'Português',
-    langEn:           'English',
-    company:          'Company',
-    companyName:      'Company name',
-    save:             'Save',
-    saving:           'Saving…',
-    saved:            'Saved!',
-    security:         'Security',
-    currentPassword:  'Current password',
-    newPassword:      'New password',
-    confirmPassword:  'Confirm new password',
-    changePassword:   'Change password',
-    passwordChanged:  'Password changed successfully!',
-    passwordMismatch: 'Passwords do not match.',
-    errorGeneric:     'An error occurred. Please try again.',
-  },
-} as const;
-
-// ── Section card ──────────────────────────────────────────────────────────────
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-lg border border-border bg-card p-6 space-y-4">
@@ -65,7 +15,6 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-// ── Toggle switch ─────────────────────────────────────────────────────────────
 function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
   return (
     <button
@@ -85,23 +34,20 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void 
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
 export default function ConfiguracoesPage() {
   const { theme, setTheme, lang, setLang } = useSettings();
-  const t = T[lang];
+  const t = useT();
+  const s = t.settings;
 
-  // Company name
   const [companyName, setCompanyName]     = useState('');
   const [nameStatus,  setNameStatus]      = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
-  // Password
   const [currentPwd,  setCurrentPwd]      = useState('');
   const [newPwd,       setNewPwd]          = useState('');
   const [confirmPwd,   setConfirmPwd]      = useState('');
   const [pwdStatus,    setPwdStatus]       = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [pwdError,     setPwdError]        = useState('');
 
-  // Load tenant name on mount
   useEffect(() => {
     api.getTenant().then(({ tenant }) => setCompanyName(tenant.name)).catch(() => {});
   }, []);
@@ -123,7 +69,7 @@ export default function ConfiguracoesPage() {
     e.preventDefault();
     setPwdError('');
     if (newPwd !== confirmPwd) {
-      setPwdError(t.passwordMismatch);
+      setPwdError(s.passwordMismatch);
       return;
     }
     setPwdStatus('saving');
@@ -135,7 +81,7 @@ export default function ConfiguracoesPage() {
       setConfirmPwd('');
       setTimeout(() => setPwdStatus('idle'), 2500);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : t.errorGeneric;
+      const msg = err instanceof Error ? err.message : s.errorGeneric;
       setPwdError(msg);
       setPwdStatus('error');
       setTimeout(() => setPwdStatus('idle'), 2500);
@@ -145,18 +91,18 @@ export default function ConfiguracoesPage() {
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t.title}</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{s.title}</h1>
       </div>
 
       {/* ── Appearance ── */}
-      <Section title={t.appearance}>
+      <Section title={s.appearance}>
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <div className="flex items-center gap-2 text-sm font-medium">
               {theme === 'dark' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-              {t.darkMode}
+              {s.darkMode}
             </div>
-            <p className="text-xs text-muted-foreground">{t.darkModeDesc}</p>
+            <p className="text-xs text-muted-foreground">{s.darkModeDesc}</p>
           </div>
           <Toggle
             checked={theme === 'dark'}
@@ -166,8 +112,8 @@ export default function ConfiguracoesPage() {
       </Section>
 
       {/* ── Language ── */}
-      <Section title={t.language}>
-        <p className="text-xs text-muted-foreground">{t.languageDesc}</p>
+      <Section title={s.language}>
+        <p className="text-xs text-muted-foreground">{s.languageDesc}</p>
         <div className="flex gap-2">
           {(['pt', 'en'] as const).map((l) => (
             <button
@@ -179,17 +125,17 @@ export default function ConfiguracoesPage() {
                   : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'
               }`}
             >
-              {l === 'pt' ? t.langPt : t.langEn}
+              {l === 'pt' ? s.langPt : s.langEn}
             </button>
           ))}
         </div>
       </Section>
 
       {/* ── Company ── */}
-      <Section title={t.company}>
+      <Section title={s.company}>
         <form onSubmit={handleSaveName} className="flex gap-3 items-end">
           <div className="flex-1 space-y-1">
-            <label htmlFor="company-name" className="text-xs text-muted-foreground">{t.companyName}</label>
+            <label htmlFor="company-name" className="text-xs text-muted-foreground">{s.companyName}</label>
             <input
               id="company-name"
               type="text"
@@ -204,19 +150,19 @@ export default function ConfiguracoesPage() {
             disabled={nameStatus === 'saving'}
             className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 whitespace-nowrap"
           >
-            {nameStatus === 'saving' ? t.saving : nameStatus === 'saved' ? t.saved : t.save}
+            {nameStatus === 'saving' ? s.saving : nameStatus === 'saved' ? s.saved : s.save}
           </button>
         </form>
         {nameStatus === 'error' && (
-          <p className="text-xs text-destructive">{t.errorGeneric}</p>
+          <p className="text-xs text-destructive">{s.errorGeneric}</p>
         )}
       </Section>
 
       {/* ── Security ── */}
-      <Section title={t.security}>
+      <Section title={s.security}>
         <form onSubmit={handleChangePassword} className="space-y-3">
           <div className="space-y-1">
-            <label htmlFor="current-password" className="text-xs text-muted-foreground">{t.currentPassword}</label>
+            <label htmlFor="current-password" className="text-xs text-muted-foreground">{s.currentPassword}</label>
             <input
               id="current-password"
               type="password"
@@ -227,7 +173,7 @@ export default function ConfiguracoesPage() {
             />
           </div>
           <div className="space-y-1">
-            <label htmlFor="new-password" className="text-xs text-muted-foreground">{t.newPassword}</label>
+            <label htmlFor="new-password" className="text-xs text-muted-foreground">{s.newPassword}</label>
             <input
               id="new-password"
               type="password"
@@ -239,7 +185,7 @@ export default function ConfiguracoesPage() {
             />
           </div>
           <div className="space-y-1">
-            <label htmlFor="confirm-password" className="text-xs text-muted-foreground">{t.confirmPassword}</label>
+            <label htmlFor="confirm-password" className="text-xs text-muted-foreground">{s.confirmPassword}</label>
             <input
               id="confirm-password"
               type="password"
@@ -252,14 +198,14 @@ export default function ConfiguracoesPage() {
           </div>
           {pwdError && <p className="text-xs text-destructive">{pwdError}</p>}
           {pwdStatus === 'saved' && (
-            <p className="text-xs text-[hsl(var(--positive))]">{t.passwordChanged}</p>
+            <p className="text-xs text-[hsl(var(--positive))]">{s.passwordChanged}</p>
           )}
           <button
             type="submit"
             disabled={pwdStatus === 'saving'}
             className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50"
           >
-            {pwdStatus === 'saving' ? t.saving : t.changePassword}
+            {pwdStatus === 'saving' ? s.saving : s.changePassword}
           </button>
         </form>
       </Section>

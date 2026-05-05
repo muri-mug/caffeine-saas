@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useT } from '@/lib/i18n';
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -12,24 +13,25 @@ import {
   Settings,
 } from '@/lib/icons';
 
-const navItems = [
-  { href: '/dashboard',     label: 'Visão geral',   icon: LayoutDashboard },
-  { href: '/vendas',        label: 'Vendas',         icon: ShoppingCart },
-  { href: '/estoque',       label: 'Estoque',        icon: Package },
-  { href: '/caixa',         label: 'Fluxo de caixa', icon: Wallet },
-  { href: '/dre',           label: 'DRE',            icon: FileText },
-  { href: '/configuracoes', label: 'Configurações',  icon: Settings },
-];
-
 export function Sidebar() {
   const pathname = usePathname();
+  const t = useT();
+
+  const navItems = [
+    { href: '/dashboard',     label: t.nav.overview,  icon: LayoutDashboard },
+    { href: '/vendas',        label: t.nav.sales,      icon: ShoppingCart },
+    { href: '/estoque',       label: t.nav.inventory,  icon: Package },
+    { href: '/caixa',         label: t.nav.cashflow,   icon: Wallet },
+    { href: '/dre',           label: t.nav.dre,        icon: FileText },
+    { href: '/configuracoes', label: t.nav.settings,   icon: Settings },
+  ];
 
   return (
     <aside className="hidden md:flex flex-col w-56 border-r border-border bg-card min-h-screen">
       {/* Logo */}
       <div className="h-16 flex items-center px-6 border-b border-border">
         <span className="text-lg font-bold text-primary tracking-tight">Sarta</span>
-        <span className="ml-1.5 text-xs text-muted-foreground font-medium">financeiro</span>
+        <span className="ml-1.5 text-xs text-muted-foreground font-medium">{t.nav.tagline}</span>
       </div>
 
       {/* Nav */}

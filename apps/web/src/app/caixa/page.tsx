@@ -5,8 +5,8 @@ import { Card } from '@tremor/react';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { useT } from '@/lib/i18n';
 import { PeriodSelector } from '@/components/financial/period-selector';
-import { CurrencyValue } from '@/components/financial/currency-value';
 import { Banknote, ArrowUpRight, ArrowDownLeft, Scale, Wallet } from '@/lib/icons';
 import type { Period } from '@/hooks/use-dashboard';
 
@@ -34,20 +34,24 @@ interface CashflowData {
   };
 }
 
-const statusBadge: Record<string, string> = {
-  ok:        'bg-positive/10 text-positive',
-  low_diff:  'bg-warning/10 text-warning',
-  high_diff: 'bg-negative/10 text-negative',
-  open:      'bg-muted text-muted-foreground',
-};
-const statusLabel: Record<string, string> = {
-  ok: 'Caixa OK', low_diff: 'Diferença pequena', high_diff: 'Diferença grande', open: 'Aberto',
-};
-
 export default function CaixaPage() {
   const [period, setPeriod]   = useState<Period>('today');
   const [data, setData]       = useState<CashflowData | null>(null);
   const [loading, setLoading] = useState(true);
+  const t = useT();
+
+  const statusBadge: Record<string, string> = {
+    ok:        'bg-positive/10 text-positive',
+    low_diff:  'bg-warning/10 text-warning',
+    high_diff: 'bg-negative/10 text-negative',
+    open:      'bg-muted text-muted-foreground',
+  };
+  const statusLabel: Record<string, string> = {
+    ok:        t.cashflow.statusOk,
+    low_diff:  t.cashflow.statusLowDiff,
+    high_diff: t.cashflow.statusHighDiff,
+    open:      t.cashflow.statusOpen,
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -66,8 +70,8 @@ export default function CaixaPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Fluxo de Caixa</h1>
-          <p className="text-sm text-muted-foreground mt-1">Abertura e fechamento de caixa por turno</p>
+          <h1 className="text-2xl font-semibold text-foreground">{t.cashflow.title}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t.cashflow.subtitle}</p>
         </div>
         <PeriodSelector value={period} onChange={setPeriod} />
       </div>
@@ -75,10 +79,10 @@ export default function CaixaPage() {
       {/* Resumo do período */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Receita líquida',    value: s?.totalNetRevenue,    icon: Wallet,        color: 'text-positive' },
-          { label: 'Entradas em caixa',  value: s?.totalCashReceived,  icon: ArrowUpRight,  color: 'text-positive' },
-          { label: 'Saídas de caixa',    value: s?.totalCashPaidOut,   icon: ArrowDownLeft, color: 'text-negative' },
-          { label: 'Diferença total',    value: s?.totalCashDifference, icon: Scale,        color: (s?.totalCashDifference ?? 0) === 0 ? 'text-positive' : 'text-negative' },
+          { label: t.cashflow.netRevenue,      value: s?.totalNetRevenue,     icon: Wallet,        color: 'text-positive' },
+          { label: t.cashflow.cashInflows,     value: s?.totalCashReceived,   icon: ArrowUpRight,  color: 'text-positive' },
+          { label: t.cashflow.cashOutflows,    value: s?.totalCashPaidOut,    icon: ArrowDownLeft, color: 'text-negative' },
+          { label: t.cashflow.totalDifference, value: s?.totalCashDifference, icon: Scale,         color: (s?.totalCashDifference ?? 0) === 0 ? 'text-positive' : 'text-negative' },
         ].map(({ label, value, icon: Icon, color }) => (
           <Card key={label} className="animate-fade-in">
             <div className="flex items-start justify-between">
@@ -103,10 +107,10 @@ export default function CaixaPage() {
       {/* Tabela de turnos */}
       <Card className="p-0 overflow-hidden">
         <div className="px-4 py-3 border-b border-border">
-          <p className="text-base font-semibold text-foreground">Turnos</p>
+          <p className="text-base font-semibold text-foreground">{t.cashflow.shifts}</p>
           {s && (
             <p className="text-xs text-muted-foreground mt-0.5">
-              {s.closedShifts} fechado(s) · {s.openShifts} aberto(s) · {s.shiftsWithDifference} com diferença
+              {s.closedShifts} {t.cashflow.closed} · {s.openShifts} {t.cashflow.open} · {s.shiftsWithDifference} {t.cashflow.withDifference}
             </p>
           )}
         </div>
@@ -119,14 +123,18 @@ export default function CaixaPage() {
           </div>
         ) : !data?.shifts.length ? (
           <div className="py-16 text-center text-sm text-muted-foreground">
-            Nenhum turno encontrado neste período
+            {t.cashflow.noShifts}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
-                  {['Turno', 'Funcionário', 'Abertura', 'Fundo', 'Esperado', 'Contado', 'Diferença', 'Vendas', 'Status'].map((h) => (
+                  {[
+                    t.cashflow.shift, t.cashflow.employee, t.cashflow.opening,
+                    t.cashflow.float, t.cashflow.expected, t.cashflow.counted,
+                    t.cashflow.difference, t.cashflow.salesCol, t.cashflow.statusOk.split(' ')[0],
+                  ].map((h) => (
                     <th key={h} className="text-left text-xs font-medium text-muted-foreground px-3 py-3 whitespace-nowrap">
                       {h}
                     </th>
@@ -135,15 +143,17 @@ export default function CaixaPage() {
               </thead>
               <tbody>
                 {data.shifts.map((shift) => {
-                  const opened = new Date(shift.openedAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-                  const closed = shift.closedAt ? new Date(shift.closedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'Aberto';
+                  const opened = new Date(shift.openedAt).toLocaleString(t.locale, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+                  const closed = shift.closedAt
+                    ? new Date(shift.closedAt).toLocaleTimeString(t.locale, { hour: '2-digit', minute: '2-digit' })
+                    : t.cashflow.statusOpen;
                   const diff = shift.cashDifference ?? 0;
 
                   return (
                     <tr key={shift.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                       <td className="px-3 py-3 whitespace-nowrap">
                         <p className="text-sm text-foreground">{opened}</p>
-                        <p className="text-xs text-muted-foreground">até {closed}</p>
+                        <p className="text-xs text-muted-foreground">{t.cashflow.until} {closed}</p>
                       </td>
                       <td className="px-3 py-3 text-sm text-foreground">{shift.employee?.name ?? '—'}</td>
                       <td className="px-3 py-3 text-sm financial-value text-right">{formatCurrency(shift.openingCashAmount)}</td>
@@ -161,7 +171,7 @@ export default function CaixaPage() {
                       </td>
                       <td className="px-3 py-3 text-right">
                         <span className="text-sm financial-value">{formatCurrency(shift.netTotal)}</span>
-                        <p className="text-xs text-muted-foreground">{shift.receiptsCount} vendas</p>
+                        <p className="text-xs text-muted-foreground">{shift.receiptsCount} {t.cashflow.sales}</p>
                       </td>
                       <td className="px-3 py-3">
                         <span className={cn('inline-flex px-2 py-0.5 rounded-full text-xs font-medium', statusBadge[shift.cashStatus])}>

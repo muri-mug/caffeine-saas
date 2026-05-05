@@ -1,6 +1,7 @@
 'use client';
 
 import { Card } from '@tremor/react';
+import { useT } from '@/lib/i18n';
 import { formatCurrency, formatNumber } from '@/lib/format';
 
 interface Product {
@@ -16,11 +17,12 @@ interface TopProductsTableProps {
 }
 
 export function TopProductsTable({ data, loading }: TopProductsTableProps) {
+  const t = useT();
   const maxRevenue = data[0]?.revenue ?? 1;
 
   return (
     <Card>
-      <p className="text-base font-semibold text-foreground mb-4">Top produtos</p>
+      <p className="text-base font-semibold text-foreground mb-4">{t.dashboard.topProducts}</p>
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -28,7 +30,7 @@ export function TopProductsTable({ data, loading }: TopProductsTableProps) {
           ))}
         </div>
       ) : data.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-8">Sem dados</p>
+        <p className="text-sm text-muted-foreground text-center py-8">{t.dashboard.noData}</p>
       ) : (
         <div className="space-y-2">
           {data.map((product) => (

@@ -5,7 +5,7 @@ import { Card } from '@tremor/react';
 import { api } from '@/lib/api';
 import { formatCurrency, formatPercent } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { CurrencyValue } from '@/components/financial/currency-value';
+import { useT } from '@/lib/i18n';
 import { FileText, DollarSign } from '@/lib/icons';
 
 const API = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001';
@@ -23,15 +23,6 @@ interface DreData {
   expensesList: { id: string; category: string; description: string; amount: number; referenceDate: string; recurrence: string }[];
   transactionsCount: number;
 }
-
-const expenseCategories: Record<string, string> = {
-  rent: 'Aluguel', salary: 'Salários', utilities: 'Energia/Água/Internet', other: 'Outras despesas',
-};
-
-const periodOptions = [
-  { value: 'month' as DRePeriod,     label: 'Este mês' },
-  { value: 'lastmonth' as DRePeriod, label: 'Mês anterior' },
-];
 
 function DreRow({ label, value, indent = 0, bold = false, colorize = false, separator = false, positive = true }:
   { label: string; value: number; indent?: number; bold?: boolean; colorize?: boolean; separator?: boolean; positive?: boolean }) {
@@ -63,6 +54,17 @@ export default function DrePage() {
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [newExpense, setNewExpense]  = useState({ category: 'rent', description: '', amount: '', referenceDate: new Date().toISOString().slice(0,10) });
   const [saving, setSaving]         = useState(false);
+  const t = useT();
+
+  const expenseCategories: Record<string, string> = {
+    rent: t.dre.catRent, salary: t.dre.catSalary,
+    utilities: t.dre.catUtilities, other: t.dre.catOther,
+  };
+
+  const periodOptions = [
+    { value: 'month' as DRePeriod,     label: t.dre.thisMonth },
+    { value: 'lastmonth' as DRePeriod, label: t.dre.lastMonth },
+  ];
 
   const fetchData = () => {
     setLoading(true);
@@ -70,7 +72,7 @@ export default function DrePage() {
       .then((r) => r.json()).then(setData).catch(console.error).finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchData(); }, [period]);
+  useEffect(() => { fetchData(); }, [period, t.locale]);
 
   const handleAddExpense = async () => {
     if (!newExpense.description || !newExpense.amount) return;
@@ -102,8 +104,8 @@ export default function DrePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">DRE</h1>
-          <p className="text-sm text-muted-foreground mt-1">Demonstrativo de Resultado do Exercício</p>
+          <h1 className="text-2xl font-semibold text-foreground">{t.dre.title}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t.dre.subtitle}</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
@@ -125,10 +127,10 @@ export default function DrePage() {
           <Card>
             <div className="flex items-center gap-2 mb-4">
               <FileText className="h-4 w-4 text-muted-foreground" />
-              <p className="text-base font-semibold text-foreground">Demonstrativo</p>
+              <p className="text-base font-semibold text-foreground">{t.dre.statement}</p>
               {data && (
                 <span className="text-xs text-muted-foreground ml-auto">
-                  {new Date(data.period.from).toLocaleDateString('pt-BR')} – {new Date(data.period.to).toLocaleDateString('pt-BR')}
+                  {new Date(data.period.from).toLocaleDateString(t.locale)} – {new Date(data.period.to).toLocaleDateString(t.locale)}
                 </span>
               )}
             </div>
@@ -142,26 +144,26 @@ export default function DrePage() {
             ) : d ? (
               <table className="w-full">
                 <tbody>
-                  <DreRow label="(+) Receita Bruta"         value={d.grossRevenue}   bold />
-                  <DreRow label="(-) Devoluções/Estornos"   value={d.refundsTotal}   indent={1} />
-                  <DreRow label="(-) Descontos"             value={d.discounts}      indent={1} />
-                  <DreRow label="(-) Impostos"              value={d.taxes}          indent={1} />
-                  <DreRow label="(=) Receita Líquida"       value={d.netRevenue}     bold separator colorize positive />
-                  <DreRow label="(-) CMV"                   value={d.cmv}            indent={1} />
-                  <DreRow label="(=) Lucro Bruto"           value={d.grossProfit}    bold separator colorize positive />
+                  <DreRow label={t.dre.grossRevenue}  value={d.grossRevenue}   bold />
+                  <DreRow label={t.dre.refunds}        value={d.refundsTotal}   indent={1} />
+                  <DreRow label={t.dre.discounts}      value={d.discounts}      indent={1} />
+                  <DreRow label={t.dre.taxes}          value={d.taxes}          indent={1} />
+                  <DreRow label={t.dre.netRevenue}     value={d.netRevenue}     bold separator colorize positive />
+                  <DreRow label={t.dre.cmv}            value={d.cmv}            indent={1} />
+                  <DreRow label={t.dre.grossProfit}    value={d.grossProfit}    bold separator colorize positive />
                   <tr>
-                    <td className="py-1 text-xs text-muted-foreground pl-4">Margem Bruta</td>
+                    <td className="py-1 text-xs text-muted-foreground pl-4">{t.dre.grossMargin}</td>
                     <td className="py-1 text-xs text-right text-muted-foreground financial-value">{formatPercent(d.grossMarginPct)}</td>
                   </tr>
                   {Object.entries(d.expenses).map(([cat, amt]) => (
                     <DreRow key={cat} label={`(-) ${expenseCategories[cat] ?? cat}`} value={amt} indent={1} />
                   ))}
                   {d.totalExpenses > 0 && (
-                    <DreRow label="(-) Total Despesas Operacionais" value={d.totalExpenses} bold separator />
+                    <DreRow label={t.dre.totalExpenses} value={d.totalExpenses} bold separator />
                   )}
-                  <DreRow label="(=) EBITDA / Lucro Líquido" value={d.netProfit} bold separator colorize positive />
+                  <DreRow label={t.dre.ebitda} value={d.netProfit} bold separator colorize positive />
                   <tr>
-                    <td className="py-1 text-xs text-muted-foreground pl-4">Margem Líquida</td>
+                    <td className="py-1 text-xs text-muted-foreground pl-4">{t.dre.netMargin}</td>
                     <td className="py-1 text-xs text-right text-muted-foreground financial-value">{formatPercent(d.netMarginPct)}</td>
                   </tr>
                 </tbody>
@@ -174,10 +176,10 @@ export default function DrePage() {
         <div className="space-y-4">
           <Card>
             <div className="flex items-center justify-between mb-4">
-              <p className="text-base font-semibold text-foreground">Despesas</p>
+              <p className="text-base font-semibold text-foreground">{t.dre.expenses}</p>
               <button onClick={() => setShowExpenseForm(!showExpenseForm)}
                 className="text-xs text-primary hover:underline font-medium">
-                + Lançar
+                {t.dre.addExpense}
               </button>
             </div>
 
@@ -187,10 +189,10 @@ export default function DrePage() {
                   className="w-full text-sm border border-border rounded-md px-3 py-2 bg-background">
                   {Object.entries(expenseCategories).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                 </select>
-                <input type="text" placeholder="Descrição" value={newExpense.description}
+                <input type="text" placeholder={t.dre.description} value={newExpense.description}
                   onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
                   className="w-full text-sm border border-border rounded-md px-3 py-2 bg-background" />
-                <input type="number" placeholder="Valor (R$)" value={newExpense.amount}
+                <input type="number" placeholder={t.dre.amount} value={newExpense.amount}
                   onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
                   className="w-full text-sm border border-border rounded-md px-3 py-2 bg-background financial-value" />
                 <input type="date" value={newExpense.referenceDate}
@@ -199,18 +201,18 @@ export default function DrePage() {
                 <div className="flex gap-2">
                   <button onClick={handleAddExpense} disabled={saving}
                     className="flex-1 bg-primary text-primary-foreground text-sm font-medium py-2 rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50">
-                    {saving ? 'Salvando…' : 'Salvar'}
+                    {saving ? t.dre.saving : t.dre.save}
                   </button>
                   <button onClick={() => setShowExpenseForm(false)}
                     className="flex-1 bg-muted text-foreground text-sm font-medium py-2 rounded-md hover:bg-muted/80 transition-colors">
-                    Cancelar
+                    {t.dre.cancel}
                   </button>
                 </div>
               </div>
             )}
 
             {data?.expensesList.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">Nenhuma despesa lançada</p>
+              <p className="text-sm text-muted-foreground text-center py-4">{t.dre.noExpenses}</p>
             ) : (
               <div className="space-y-2">
                 {data?.expensesList.map((exp) => (

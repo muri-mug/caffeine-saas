@@ -5,6 +5,7 @@ import { Card } from '@tremor/react';
 import { api } from '@/lib/api';
 import { formatCurrency } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { useT } from '@/lib/i18n';
 import { Search, AlertTriangle, CheckCircle2, XCircle, Package } from '@/lib/icons';
 import { EmptyState } from '@/components/shared/empty-state';
 
@@ -24,22 +25,22 @@ interface InventoryData {
   summary: { total: number; ok: number; low: number; out: number; untracked: number };
 }
 
-const statusConfig: Record<StockStatus, { label: string; color: string; icon: React.ElementType }> = {
-  ok:        { label: 'OK',          color: 'text-positive bg-positive/10', icon: CheckCircle2 },
-  low:       { label: 'Estoque baixo', color: 'text-warning bg-warning/10',  icon: AlertTriangle },
-  out:       { label: 'Sem estoque', color: 'text-negative bg-negative/10', icon: XCircle },
-  untracked: { label: 'Não rastreado', color: 'text-muted-foreground bg-muted', icon: Package },
-};
-
 export default function EstoquePage() {
   const [data, setData]         = useState<InventoryData | null>(null);
   const [loading, setLoading]   = useState(true);
   const [search, setSearch]     = useState('');
   const [statusFilter, setStatusFilter] = useState<StockStatus | 'all'>('all');
+  const t = useT();
+
+  const statusConfig: Record<StockStatus, { label: string; color: string; icon: React.ElementType }> = {
+    ok:        { label: t.inventory.statusOk,        color: 'text-positive bg-positive/10', icon: CheckCircle2 },
+    low:       { label: t.inventory.statusLow,       color: 'text-warning bg-warning/10',  icon: AlertTriangle },
+    out:       { label: t.inventory.statusOut,       color: 'text-negative bg-negative/10', icon: XCircle },
+    untracked: { label: t.inventory.statusUntracked, color: 'text-muted-foreground bg-muted', icon: Package },
+  };
 
   useEffect(() => {
     setLoading(true);
-    api['request']?.('/api/inventory');
     fetch(`${process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001'}/api/inventory`, {
       headers: { Authorization: `Bearer ${api.getToken()}` },
     })
@@ -61,8 +62,8 @@ export default function EstoquePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-foreground">Estoque</h1>
-        <p className="text-sm text-muted-foreground mt-1">Nível de estoque por variante</p>
+        <h1 className="text-2xl font-semibold text-foreground">{t.inventory.title}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t.inventory.subtitle}</p>
       </div>
 
       {/* Resumo */}
@@ -98,7 +99,7 @@ export default function EstoquePage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Buscar produto ou SKU..."
+            placeholder={t.inventory.searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-1 focus:ring-primary"
@@ -117,20 +118,20 @@ export default function EstoquePage() {
         ) : filtered.length === 0 ? (
           <EmptyState
             icon={Package}
-            title="Nenhum produto encontrado"
-            description="Tente ajustar os filtros de busca"
+            title={t.inventory.noProducts}
+            description={t.inventory.noProductsDesc}
           />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
-                  <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Produto</th>
-                  <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Categoria</th>
-                  <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3">Preço</th>
-                  <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3">Em estoque</th>
-                  <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3">Mínimo</th>
-                  <th className="text-center text-xs font-medium text-muted-foreground px-4 py-3">Status</th>
+                  <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">{t.inventory.product}</th>
+                  <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">{t.inventory.category}</th>
+                  <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3">{t.inventory.price}</th>
+                  <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3">{t.inventory.inStock}</th>
+                  <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3">{t.inventory.minimum}</th>
+                  <th className="text-center text-xs font-medium text-muted-foreground px-4 py-3">{t.inventory.status}</th>
                 </tr>
               </thead>
               <tbody>
@@ -141,7 +142,7 @@ export default function EstoquePage() {
                     <tr key={item.variantId} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3">
                         <p className="text-sm font-medium text-foreground">{item.itemName}</p>
-                        {item.variantName !== 'Padrão' && (
+                        {item.variantName !== 'Padrão' && item.variantName !== 'Default' && (
                           <p className="text-xs text-muted-foreground">{item.variantName}</p>
                         )}
                         {item.sku && <p className="text-xs text-muted-foreground font-mono">{item.sku}</p>}
