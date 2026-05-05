@@ -68,6 +68,39 @@ app.get('/tenants/me', { preHandler: requireAuth }, async (req: any) => {
   return { tenant, connections };
 });
 
+// ── PUT /tenants/me ───────────────────────────────────────────────────────────
+app.put<{ Body: { name: string } }>('/tenants/me', { preHandler: requireAuth }, async (req: any, reply) => {
+  const { name } = req.body;
+  if (!name?.trim()) return reply.status(400).send({ error: 'Nome é obrigatório' });
+  const tenant = await db.prisma.tenant.update({
+    where: { id: req.tenantId },
+    data: { name: name.trim() },
+  });
+  return { tenant };
+});
+
+// ── PUT /auth/password ────────────────────────────────────────────────────────
+app.put<{ Body: { currentPassword: string; newPassword: string } }>(
+  '/auth/password',
+  { preHandler: requireAuth },
+  async (req: any, reply) => {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return reply.status(400).send({ error: 'Senha atual e nova senha são obrigatórias' });
+    }
+    if (newPassword.length < 6) {
+      return reply.status(400).send({ error: 'A nova senha deve ter pelo menos 6 caracteres' });
+    }
+    const tenant = await db.prisma.tenant.findUniqueOrThrow({ where: { id: req.tenantId } });
+    if (tenant.passwordHash && !auth.verifyPassword(currentPassword, tenant.passwordHash)) {
+      return reply.status(401).send({ error: 'Senha atual incorreta' });
+    }
+    const passwordHash = auth.hashPassword(newPassword);
+    await db.prisma.tenant.update({ where: { id: req.tenantId }, data: { passwordHash } });
+    return { message: 'Senha atualizada com sucesso' };
+  },
+);
+
 // ── POST /providers/connect ───────────────────────────────────────────────────
 app.post<{ Body: { providerId: string; accessToken: string; displayName?: string } }>(
   '/providers/connect',

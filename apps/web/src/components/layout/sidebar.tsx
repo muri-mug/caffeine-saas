@@ -10,17 +10,15 @@ import {
   Wallet,
   FileText,
   Settings,
-  Store,
 } from '@/lib/icons';
 
 const navItems = [
-  { href: '/dashboard',  label: 'Visão geral',    icon: LayoutDashboard },
-  { href: '/vendas',     label: 'Vendas',          icon: ShoppingCart },
-  { href: '/estoque',    label: 'Estoque',         icon: Package },
-  { href: '/caixa',      label: 'Fluxo de caixa',  icon: Wallet },
-  { href: '/dre',        label: 'DRE',             icon: FileText },
-  { href: '/lojas',      label: 'Lojas',           icon: Store },
-  { href: '/configuracoes', label: 'Configurações', icon: Settings },
+  { href: '/dashboard',     label: 'Visão geral',   icon: LayoutDashboard },
+  { href: '/vendas',        label: 'Vendas',         icon: ShoppingCart },
+  { href: '/estoque',       label: 'Estoque',        icon: Package },
+  { href: '/caixa',         label: 'Fluxo de caixa', icon: Wallet },
+  { href: '/dre',           label: 'DRE',            icon: FileText },
+  { href: '/configuracoes', label: 'Configurações',  icon: Settings },
 ];
 
 export function Sidebar() {

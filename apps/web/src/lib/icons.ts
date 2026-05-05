@@ -55,6 +55,8 @@ export { CheckCircle }  from 'lucide-react'; // Sucesso
 export { AlertCircle }  from 'lucide-react'; // Erro / atenção
 export { Info }         from 'lucide-react'; // Informação
 export { Zap }          from 'lucide-react'; // Tempo real / live
+export { Moon }         from 'lucide-react'; // Tema escuro
+export { Sun }          from 'lucide-react'; // Tema claro
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 export { Plug }   from 'lucide-react'; // Provider conectado

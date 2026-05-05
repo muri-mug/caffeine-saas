@@ -53,6 +53,28 @@ class ApiClient {
     return data;
   }
 
+  // ── Tenant ───────────────────────────────────────────────────────────────
+
+  async getTenant() {
+    return this.request<{ tenant: { id: string; name: string; slug: string }; connections: unknown[] }>(
+      '/tenants/me',
+    );
+  }
+
+  async updateTenantName(name: string) {
+    return this.request<{ tenant: { id: string; name: string; slug: string } }>(
+      '/tenants/me',
+      { method: 'PUT', body: JSON.stringify({ name }) },
+    );
+  }
+
+  async changePassword(currentPassword: string, newPassword: string) {
+    return this.request<{ message: string }>(
+      '/auth/password',
+      { method: 'PUT', body: JSON.stringify({ currentPassword, newPassword }) },
+    );
+  }
+
   // ── Dashboard ────────────────────────────────────────────────────────────
 
   async getOverview(params: { period?: string; from?: string; to?: string; storeId?: string } = {}) {
