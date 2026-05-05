@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { DatabaseService } from './lib/db/database.service.js';
@@ -120,12 +121,15 @@ app.post('/providers/sync', { preHandler: requireAuth }, async (req: any, reply)
   return { message: 'Sync incremental iniciado' };
 });
 
-// ── Routes ────────────────────────────────────────────────────────────────────
-await app.register(dashboardRoutes, { prefix: '/api/dashboard', preHandler: requireAuth });
-await app.register(inventoryRoutes, { prefix: '/api/inventory', preHandler: requireAuth });
-await app.register(cashflowRoutes,  { prefix: '/api/cashflow',  preHandler: requireAuth });
-await app.register(dreRoutes,       { prefix: '/api/dre',       preHandler: requireAuth });
-await app.register(receiptsRoutes,  { prefix: '/api/receipts',  preHandler: requireAuth });
+// ── Routes (todas protegidas por requireAuth via addHook no plugin wrapper) ────
+await app.register(async (api) => {
+  api.addHook('preHandler', requireAuth);
+  await api.register(dashboardRoutes, { prefix: '/api/dashboard' });
+  await api.register(inventoryRoutes, { prefix: '/api/inventory' });
+  await api.register(cashflowRoutes,  { prefix: '/api/cashflow'  });
+  await api.register(dreRoutes,       { prefix: '/api/dre'       });
+  await api.register(receiptsRoutes,  { prefix: '/api/receipts'  });
+});
 
 // ── Webhook receiver (agnóstico) ──────────────────────────────────────────────
 app.post<{ Params: { providerId: string } }>('/api/webhooks/:providerId', async (req, reply) => {
