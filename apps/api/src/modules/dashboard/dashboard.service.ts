@@ -64,10 +64,12 @@ export class DashboardService {
       }),
     ]);
 
+    // totalAmount já é líquido de descontos (totalAmount = subtotal - discount no mapper)
+    // Portanto não se deduz totalDiscount novamente — apenas impostos embutidos
     const revenue      = sales._sum.totalAmount ?? 0;
-    const discounts    = sales._sum.totalDiscount ?? 0;
+    const discounts    = sales._sum.totalDiscount ?? 0;  // informativo
     const tax          = sales._sum.totalTax ?? 0;
-    const revenueNet   = revenue - discounts - tax;
+    const revenueNet   = revenue - tax;
     const costTotal    = lineItemAgg._sum.totalCost ?? 0;
     const grossProfit  = revenueNet - costTotal;
     const grossMargin  = revenueNet > 0 ? (grossProfit / revenueNet) * 100 : 0;

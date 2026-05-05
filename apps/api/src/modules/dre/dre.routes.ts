@@ -59,11 +59,15 @@ export async function dreRoutes(app: FastifyInstance) {
         }),
       ]);
 
-      const grossRevenue  = sales._sum.totalAmount ?? 0;
-      const refundsTotal  = refunds._sum.totalAmount ?? 0;
+      // totalAmount já é líquido de descontos — não deduzir totalDiscount novamente
+      // DRE mostra grossRevenue = preço cheio (subtotal = totalAmount + totalDiscount)
+      const totalPaid     = sales._sum.totalAmount ?? 0;
       const discounts     = sales._sum.totalDiscount ?? 0;
       const taxes         = sales._sum.totalTax ?? 0;
-      const netRevenue    = grossRevenue - refundsTotal - discounts - taxes;
+      const grossRevenue  = totalPaid + discounts;   // preço cheio antes de descontos
+      const refundsTotal  = refunds._sum.totalAmount ?? 0;
+      const netRevenue    = grossRevenue - discounts - refundsTotal - taxes;
+      // = totalPaid - refundsTotal - taxes  (matematicamente equivalente)
       const cmv           = lineItems._sum.totalCost ?? 0;
       const grossProfit   = netRevenue - cmv;
       const grossMargin   = netRevenue > 0 ? (grossProfit / netRevenue) * 100 : 0;
