@@ -25,6 +25,10 @@ const translations = {
       yesterday: 'Ontem',
       week:      '7 dias',
       month:     'Mês',
+      custom:    'Período',
+      from:      'De',
+      to:        'Até',
+      apply:     'Aplicar',
     },
     // ── Dashboard ─────────────────────────────────────────────────────────────
     dashboard: {
@@ -45,6 +49,7 @@ const translations = {
       vsPrevMonth:      'vs. mês anterior',
       topProducts:      'Top produtos',
       noData:           'Sem dados',
+      paymentMethods:   'Formas de pagamento',
     },
     // ── Sales (Vendas) ────────────────────────────────────────────────────────
     sales: {
@@ -194,6 +199,10 @@ const translations = {
       yesterday: 'Yesterday',
       week:      '7 days',
       month:     'Month',
+      custom:    'Range',
+      from:      'From',
+      to:        'To',
+      apply:     'Apply',
     },
     dashboard: {
       title:            'Overview',
@@ -213,6 +222,7 @@ const translations = {
       vsPrevMonth:      'vs. previous month',
       topProducts:      'Top products',
       noData:           'No data',
+      paymentMethods:   'Payment methods',
     },
     sales: {
       title:          'Sales',

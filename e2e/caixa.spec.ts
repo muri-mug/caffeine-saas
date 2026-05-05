@@ -29,6 +29,21 @@ test.describe('Caixa — Fluxo de Caixa', () => {
     await expect(page.getByRole('button', { name: 'Ontem' })).toHaveClass(/bg-background|shadow/);
   });
 
+  test('custom date range filter applies and fetches data', async ({ page }) => {
+    await page.goto('/caixa');
+    await page.getByRole('button', { name: 'Período' }).click();
+    await expect(page.locator('input[type="date"]').first()).toBeVisible();
+    await page.locator('input[type="date"]').first().fill('2025-01-01');
+    await page.locator('input[type="date"]').nth(1).fill('2025-01-31');
+    const applyBtn = page.getByRole('button', { name: 'Aplicar' });
+    await expect(applyBtn).toBeEnabled();
+    const [response] = await Promise.all([
+      page.waitForResponse((r) => r.url().includes('period=custom') && r.url().includes('from='), { timeout: 10000 }),
+      applyBtn.click(),
+    ]);
+    expect(response.status()).toBe(200);
+  });
+
   test('shift table has correct columns', async ({ page }) => {
     await page.goto('/caixa');
     const table = page.getByRole('table');

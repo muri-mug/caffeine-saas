@@ -48,6 +48,21 @@ test.describe('Vendas', () => {
     ).toBeVisible({ timeout: 10000 });
   });
 
+  test('custom date range filter applies and fetches data', async ({ page }) => {
+    await page.goto('/vendas');
+    await page.getByRole('button', { name: 'Período' }).click();
+    await expect(page.locator('input[type="date"]').first()).toBeVisible();
+    await page.locator('input[type="date"]').first().fill('2025-01-01');
+    await page.locator('input[type="date"]').nth(1).fill('2025-01-31');
+    const applyBtn = page.getByRole('button', { name: 'Aplicar' });
+    await expect(applyBtn).toBeEnabled();
+    const [response] = await Promise.all([
+      page.waitForResponse((r) => r.url().includes('period=custom') && r.url().includes('from='), { timeout: 10000 }),
+      applyBtn.click(),
+    ]);
+    expect(response.status()).toBe(200);
+  });
+
   test('pagination appears when there are many receipts', async ({ page }) => {
     await page.goto('/vendas');
     // Muda para mês inteiro para ter mais dados

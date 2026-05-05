@@ -144,6 +144,8 @@ function ReceiptRow({ receipt, locale, paymentLabel, saleLabel, refundLabel, ite
 
 export default function VendasPage() {
   const [period, setPeriod]   = useState<Period>('today');
+  const [customFrom, setFrom] = useState('');
+  const [customTo,   setTo]   = useState('');
   const [data, setData]       = useState<ReceiptsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage]       = useState(1);
@@ -157,20 +159,25 @@ export default function VendasPage() {
     paymentCategoryLabel[cat] ?? name;
 
   const fetchData = useCallback((p: number) => {
+    const isCustom = period === 'custom' && customFrom && customTo;
+    if (period === 'custom' && !isCustom) return; // aguarda as datas serem preenchidas
+    const qs = isCustom
+      ? `period=custom&from=${customFrom}&to=${customTo}`
+      : `period=${period}`;
     setLoading(true);
-    fetch(`${API}/api/receipts?period=${period}&page=${p}&pageSize=50`, {
+    fetch(`${API}/api/receipts?${qs}&page=${p}&pageSize=50`, {
       headers: { Authorization: `Bearer ${api.getToken()}` },
     })
       .then((r) => r.json())
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [period]);
+  }, [period, customFrom, customTo]);
 
   useEffect(() => {
     setPage(1);
     fetchData(1);
-  }, [period]);
+  }, [fetchData]);
 
   const handlePage = (next: number) => {
     setPage(next);
@@ -191,7 +198,13 @@ export default function VendasPage() {
           <h1 className="text-2xl font-semibold text-foreground">{t.sales.title}</h1>
           <p className="text-sm text-muted-foreground mt-1">{t.sales.subtitle}</p>
         </div>
-        <PeriodSelector value={period} onChange={setPeriod} />
+        <PeriodSelector
+          value={period}
+          onChange={setPeriod}
+          customFrom={customFrom}
+          customTo={customTo}
+          onCustomRange={(f, t) => { setFrom(f); setTo(t); }}
+        />
       </div>
 
       <Card className="p-0 overflow-hidden">

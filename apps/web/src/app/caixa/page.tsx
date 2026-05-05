@@ -36,6 +36,8 @@ interface CashflowData {
 
 export default function CaixaPage() {
   const [period, setPeriod]   = useState<Period>('today');
+  const [customFrom, setFrom] = useState('');
+  const [customTo,   setTo]   = useState('');
   const [data, setData]       = useState<CashflowData | null>(null);
   const [loading, setLoading] = useState(true);
   const t = useT();
@@ -54,15 +56,18 @@ export default function CaixaPage() {
   };
 
   useEffect(() => {
+    const isCustom = period === 'custom' && customFrom && customTo;
+    if (period === 'custom' && !isCustom) return;
+    const qs = isCustom ? `period=custom&from=${customFrom}&to=${customTo}` : `period=${period}`;
     setLoading(true);
-    fetch(`${API}/api/cashflow?period=${period}`, {
+    fetch(`${API}/api/cashflow?${qs}`, {
       headers: { Authorization: `Bearer ${api.getToken()}` },
     })
       .then((r) => r.json())
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [period]);
+  }, [period, customFrom, customTo]);
 
   const s = data?.summary;
 
@@ -73,7 +78,13 @@ export default function CaixaPage() {
           <h1 className="text-2xl font-semibold text-foreground">{t.cashflow.title}</h1>
           <p className="text-sm text-muted-foreground mt-1">{t.cashflow.subtitle}</p>
         </div>
-        <PeriodSelector value={period} onChange={setPeriod} />
+        <PeriodSelector
+          value={period}
+          onChange={setPeriod}
+          customFrom={customFrom}
+          customTo={customTo}
+          onCustomRange={(f, t) => { setFrom(f); setTo(t); }}
+        />
       </div>
 
       {/* Resumo do período */}

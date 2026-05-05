@@ -26,13 +26,18 @@ const PaymentDonutChart = dynamic(
 );
 
 export default function DashboardPage() {
-  const [period, setPeriod] = useState<Period>('month');
+  const [period, setPeriod]   = useState<Period>('month');
+  const [customFrom, setFrom] = useState('');
+  const [customTo,   setTo]   = useState('');
   const t = useT();
 
-  const { data: overview, loading: loadingOverview } = useDashboardOverview(period);
-  const { data: hourly,   loading: loadingHourly }   = useHourlyRevenue(period);
-  const { data: payments, loading: loadingPayments } = usePayments(period);
-  const { data: products, loading: loadingProducts } = useTopProducts(period);
+  const from = period === 'custom' ? customFrom : undefined;
+  const to   = period === 'custom' ? customTo   : undefined;
+
+  const { data: overview, loading: loadingOverview } = useDashboardOverview(period, from, to);
+  const { data: hourly,   loading: loadingHourly }   = useHourlyRevenue(period, from, to);
+  const { data: payments, loading: loadingPayments } = usePayments(period, from, to);
+  const { data: products, loading: loadingProducts } = useTopProducts(period, from, to);
 
   const periodLabel = {
     today:     t.dashboard.vsYesterday,
@@ -51,7 +56,13 @@ export default function DashboardPage() {
             {new Date().toLocaleDateString(t.locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
         </div>
-        <PeriodSelector value={period} onChange={setPeriod} />
+        <PeriodSelector
+          value={period}
+          onChange={setPeriod}
+          customFrom={customFrom}
+          customTo={customTo}
+          onCustomRange={(f, t) => { setFrom(f); setTo(t); }}
+        />
       </div>
 
       {/* KPI Cards */}
