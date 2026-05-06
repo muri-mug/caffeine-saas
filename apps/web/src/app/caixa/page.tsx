@@ -168,14 +168,14 @@ export default function CaixaPage() {
                       </td>
                       <td className="px-3 py-3 text-sm text-foreground">{shift.employee?.name ?? '—'}</td>
                       <td className="px-3 py-3 text-sm financial-value text-right">{formatCurrency(shift.openingCashAmount)}</td>
-                      <td className="px-3 py-3 text-sm financial-value text-right">{formatCurrency(shift.openingCashAmount)}</td>
+                      <td className="px-3 py-3 text-sm financial-value text-right">{formatCurrency(shift.cashPaidOut)}</td>
                       <td className="px-3 py-3 text-sm financial-value text-right">{formatCurrency(shift.expectedCashAmount)}</td>
                       <td className="px-3 py-3 text-sm financial-value text-right">
                         {shift.actualCashAmount != null ? formatCurrency(shift.actualCashAmount) : '—'}
                       </td>
                       <td className="px-3 py-3 text-right">
                         <span className={cn('text-sm financial-value font-medium',
-                          diff === 0 ? 'text-positive' : diff > 0 ? 'text-positive' : 'text-negative',
+                          diff === 0 ? 'text-positive' : diff > 0 ? 'text-warning' : 'text-negative',
                         )}>
                           {diff !== 0 ? (diff > 0 ? '+' : '') + formatCurrency(diff) : '—'}
                         </span>

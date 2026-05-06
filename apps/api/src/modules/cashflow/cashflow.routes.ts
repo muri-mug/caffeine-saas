@@ -27,39 +27,59 @@ export async function cashflowRoutes(app: FastifyInstance) {
     async (req: any) => {
       const { from, to } = parseDateRange(req.query);
       const { storeId } = req.query;
+      const tenantId = req.tenantId;
 
-      const shifts = await db.prisma.shift.findMany({
-        where: {
-          tenantId: req.tenantId,
-          openedAt: { gte: from, lte: to },
-          ...(storeId ? { storeId } : {}),
-        },
-        include: {
-          store:    { select: { id: true, name: true } },
-          employee: { select: { id: true, name: true } },
-        },
-        orderBy: { openedAt: 'desc' },
-      });
+      const receiptWhere = {
+        tenantId,
+        cancelledAt: null,
+        createdAt: { gte: from, lte: to },
+        type: 'sale',
+        ...(storeId ? { storeId } : {}),
+      };
+
+      const [shifts, cashPayments] = await Promise.all([
+        db.prisma.shift.findMany({
+          where: {
+            tenantId,
+            openedAt: { gte: from, lte: to },
+            ...(storeId ? { storeId } : {}),
+          },
+          include: {
+            store:    { select: { id: true, name: true } },
+            employee: { select: { id: true, name: true } },
+          },
+          orderBy: { openedAt: 'desc' },
+        }),
+        // Pagamentos em dinheiro no período — base real para "Entradas em caixa"
+        db.prisma.receiptPayment.aggregate({
+          where: {
+            receipt: receiptWhere,
+            paymentTypeCategory: 'cash',
+          },
+          _sum: { amount: true },
+        }),
+      ]);
 
       const enriched = shifts.map((shift) => {
         const diff = shift.cashDifference ?? 0;
         let cashStatus: 'ok' | 'low_diff' | 'high_diff' | 'open';
-        if (!shift.closedAt)           cashStatus = 'open';
-        else if (Math.abs(diff) === 0) cashStatus = 'ok';
-        else if (Math.abs(diff) <= 500) cashStatus = 'low_diff';   // ≤ R$5
+        if (!shift.closedAt)            cashStatus = 'open';
+        else if (Math.abs(diff) === 0)  cashStatus = 'ok';
+        else if (Math.abs(diff) <= 500) cashStatus = 'low_diff';   // ≤ R$5,00
         else                            cashStatus = 'high_diff';
 
         return { ...shift, cashStatus };
       });
 
-      // Resumo do período
       const closed = enriched.filter((s) => s.closedAt);
       const summary = {
         totalShifts:          shifts.length,
         closedShifts:         closed.length,
         openShifts:           shifts.filter((s) => !s.closedAt).length,
+        // netRevenue = total de vendas do período (todas as formas de pagamento)
         totalNetRevenue:      closed.reduce((s, x) => s + x.netTotal, 0),
-        totalCashReceived:    closed.reduce((s, x) => s + x.cashReceived, 0),
+        // cashReceived = apenas pagamentos em dinheiro (category='cash')
+        totalCashReceived:    cashPayments._sum.amount ?? 0,
         totalCashPaidOut:     closed.reduce((s, x) => s + x.cashPaidOut, 0),
         totalCashDifference:  closed.reduce((s, x) => s + (x.cashDifference ?? 0), 0),
         shiftsWithDifference: closed.filter((s) => Math.abs(s.cashDifference ?? 0) > 0).length,

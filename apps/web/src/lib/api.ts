@@ -80,8 +80,9 @@ class ApiClient {
   async getOverview(params: { period?: string; from?: string; to?: string; storeId?: string } = {}) {
     const qs = new URLSearchParams(params as Record<string, string>).toString();
     return this.request<{
-      revenue: number;
-      revenueNet: number;
+      grossRevenue: number;     // preço cheio (subtotal, antes de descontos)
+      revenue: number;          // após descontos (= totalAmount)
+      revenueNet: number;       // após descontos e impostos
       costTotal: number;
       grossProfit: number;
       grossMarginPct: number;
@@ -89,6 +90,7 @@ class ApiClient {
       avgTicket: number;
       refundsTotal: number;
       discountsTotal: number;
+      taxTotal: number;
       revenueDelta?: number;
       transactionsDelta?: number;
       avgTicketDelta?: number;

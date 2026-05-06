@@ -2,7 +2,7 @@
 // Consulta apenas o banco normalizado — não sabe de Loyverse.
 
 import type { PrismaClient } from '@prisma/client';
-import { startOfDay, endOfDay, startOfMonth, endOfMonth, subDays, subMonths } from 'date-fns';
+import { subDays } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 
 export interface DateRange {
@@ -10,18 +10,31 @@ export interface DateRange {
   to: Date;
 }
 
+// ── Semântica dos campos de receita ──────────────────────────────────────────
+// totalAmount   = o que o cliente pagou (já líquido de desconto, pode ter tax embutido)
+// totalDiscount = desconto concedido (já deduzido do totalAmount)
+// totalTax      = imposto embutido no totalAmount
+// subtotal      = totalAmount + totalDiscount = preço cheio antes de descontos
+//
+// grossRevenue  = SUM(subtotal)     → Receita Bruta (preço cheio, antes de descontos)
+// revenue       = SUM(totalAmount)  → Receita após descontos (base para avgTicket / deltas)
+// revenueNet    = revenue - taxes   → Receita Líquida (após descontos e impostos embutidos)
+// grossProfit   = revenueNet - cmv  → Lucro Bruto
+// grossMarginPct = grossProfit / revenueNet × 100
+
 export interface OverviewMetrics {
-  revenue: number;          // centavos
-  revenueNet: number;       // centavos (sem desconto e tax)
-  costTotal: number;        // CMV em centavos
-  grossProfit: number;      // centavos
-  grossMarginPct: number;   // %
+  grossRevenue: number;      // centavos — preço cheio (antes de descontos)
+  revenue: number;           // centavos — após descontos (= totalAmount)
+  revenueNet: number;        // centavos — após descontos e impostos
+  costTotal: number;         // centavos — CMV (custo da mercadoria vendida)
+  grossProfit: number;       // centavos — lucro bruto (revenueNet - CMV)
+  grossMarginPct: number;    // % — margem bruta
   transactionsCount: number;
-  avgTicket: number;        // centavos
-  refundsTotal: number;     // centavos
-  discountsTotal: number;   // centavos
-  // Deltas vs período anterior (%)
-  revenueDelta?: number;
+  avgTicket: number;         // centavos — ticket médio (revenue / count)
+  refundsTotal: number;      // centavos — total de devoluções
+  discountsTotal: number;    // centavos — total de descontos concedidos
+  taxTotal: number;          // centavos — total de impostos embutidos
+  revenueDelta?: number;     // % variação vs período anterior
   transactionsDelta?: number;
   avgTicketDelta?: number;
 }
@@ -46,30 +59,26 @@ export class DashboardService {
     const where = this.buildReceiptWhere(tenantId, range, storeId);
 
     const [sales, refunds, lineItemAgg] = await Promise.all([
-      // Vendas no período
       this.prisma.receipt.aggregate({
         where: { ...where, type: 'sale' },
-        _sum:   { totalAmount: true, totalDiscount: true, totalTax: true },
+        _sum:   { subtotal: true, totalAmount: true, totalDiscount: true, totalTax: true },
         _count: { id: true },
       }),
-      // Devoluções
       this.prisma.receipt.aggregate({
         where: { ...where, type: 'refund' },
         _sum: { totalAmount: true },
       }),
-      // CMV
       this.prisma.receiptLineItem.aggregate({
         where: { receipt: { ...where, type: 'sale' } },
         _sum: { totalCost: true },
       }),
     ]);
 
-    // totalAmount já é líquido de descontos (totalAmount = subtotal - discount no mapper)
-    // Portanto não se deduz totalDiscount novamente — apenas impostos embutidos
-    const revenue      = sales._sum.totalAmount ?? 0;
-    const discounts    = sales._sum.totalDiscount ?? 0;  // informativo
-    const tax          = sales._sum.totalTax ?? 0;
-    const revenueNet   = revenue - tax;
+    const grossRevenue = sales._sum.subtotal     ?? 0;   // preço cheio
+    const revenue      = sales._sum.totalAmount  ?? 0;   // após descontos
+    const discounts    = sales._sum.totalDiscount ?? 0;
+    const taxes        = sales._sum.totalTax      ?? 0;
+    const revenueNet   = revenue - taxes;                // líquido de impostos
     const costTotal    = lineItemAgg._sum.totalCost ?? 0;
     const grossProfit  = revenueNet - costTotal;
     const grossMargin  = revenueNet > 0 ? (grossProfit / revenueNet) * 100 : 0;
@@ -77,32 +86,34 @@ export class DashboardService {
     const refundsTotal = refunds._sum.totalAmount ?? 0;
     const avgTicket    = count > 0 ? Math.round(revenue / count) : 0;
 
-    // Delta vs período anterior
+    // Delta vs período anterior (compara grossRevenue para apples-to-apples)
     const prevRange = this.previousPeriod(range);
     const prevWhere = this.buildReceiptWhere(tenantId, prevRange, storeId);
     const prevSales = await this.prisma.receipt.aggregate({
       where: { ...prevWhere, type: 'sale' },
-      _sum:   { totalAmount: true },
+      _sum:   { subtotal: true, totalAmount: true },
       _count: { id: true },
     });
 
-    const prevRevenue = prevSales._sum.totalAmount ?? 0;
-    const prevCount   = prevSales._count.id;
-    const prevAvg     = prevCount > 0 ? Math.round(prevRevenue / prevCount) : 0;
+    const prevGross  = prevSales._sum.subtotal    ?? 0;
+    const prevCount  = prevSales._count.id;
+    const prevAvg    = prevCount > 0 ? Math.round((prevSales._sum.totalAmount ?? 0) / prevCount) : 0;
 
     return {
+      grossRevenue,
       revenue,
       revenueNet,
       costTotal,
       grossProfit,
-      grossMarginPct: Math.round(grossMargin * 10) / 10,
+      grossMarginPct:    Math.round(grossMargin * 10) / 10,
       transactionsCount: count,
       avgTicket,
       refundsTotal,
-      discountsTotal: discounts,
-      revenueDelta:      prevRevenue > 0 ? Math.round(((revenue - prevRevenue) / prevRevenue) * 1000) / 10 : undefined,
-      transactionsDelta: prevCount > 0   ? Math.round(((count - prevCount) / prevCount) * 1000) / 10 : undefined,
-      avgTicketDelta:    prevAvg > 0     ? Math.round(((avgTicket - prevAvg) / prevAvg) * 1000) / 10 : undefined,
+      discountsTotal:    discounts,
+      taxTotal:          taxes,
+      revenueDelta:      prevGross > 0  ? Math.round(((grossRevenue - prevGross) / prevGross) * 1000) / 10 : undefined,
+      transactionsDelta: prevCount > 0  ? Math.round(((count - prevCount) / prevCount) * 1000) / 10 : undefined,
+      avgTicketDelta:    prevAvg > 0    ? Math.round(((avgTicket - prevAvg) / prevAvg) * 1000) / 10 : undefined,
     };
   }
 
@@ -114,18 +125,16 @@ export class DashboardService {
       select: { createdAt: true, totalAmount: true },
     });
 
-    // Agrupar por hora (timezone America/Sao_Paulo)
     const buckets: Record<string, { receita: number; transacoes: number }> = {};
 
     for (const r of receipts) {
       const zoned = toZonedTime(r.createdAt, 'America/Sao_Paulo');
       const hour  = `${String(zoned.getHours()).padStart(2, '0')}:00`;
       if (!buckets[hour]) buckets[hour] = { receita: 0, transacoes: 0 };
-      buckets[hour].receita     += r.totalAmount;
-      buckets[hour].transacoes  += 1;
+      buckets[hour].receita    += r.totalAmount;
+      buckets[hour].transacoes += 1;
     }
 
-    // Preencher todas as horas de 00 a 23
     return Array.from({ length: 24 }, (_, h) => {
       const hour = `${String(h).padStart(2, '0')}:00`;
       return { hour, receita: buckets[hour]?.receita ?? 0, transacoes: buckets[hour]?.transacoes ?? 0 };
