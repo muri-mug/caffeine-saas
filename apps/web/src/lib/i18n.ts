@@ -12,6 +12,7 @@ const translations = {
       cashflow:  'Fluxo de caixa',
       dre:       'DRE',
       settings:  'Configurações',
+      help:      'Ajuda',
     },
     // ── Topbar ───────────────────────────────────────────────────────────────
     topbar: {
@@ -188,6 +189,7 @@ const translations = {
       cashflow:  'Cash Flow',
       dre:       'DRE',
       settings:  'Settings',
+      help:      'Help',
     },
     topbar: {
       realtime: 'Real-time data',

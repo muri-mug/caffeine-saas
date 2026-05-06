@@ -8,6 +8,7 @@ export { Package }         from 'lucide-react'; // Estoque
 export { Wallet }          from 'lucide-react'; // Fluxo de caixa
 export { FileText }        from 'lucide-react'; // DRE / Relatórios
 export { Settings }        from 'lucide-react'; // Configurações
+export { HelpCircle }      from 'lucide-react'; // Ajuda
 export { Store }           from 'lucide-react'; // Lojas
 export { Users }           from 'lucide-react'; // Clientes / Funcionários
 

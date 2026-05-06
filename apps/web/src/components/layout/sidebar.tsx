@@ -11,6 +11,7 @@ import {
   Wallet,
   FileText,
   Settings,
+  HelpCircle,
 } from '@/lib/icons';
 
 export function Sidebar() {
@@ -24,6 +25,7 @@ export function Sidebar() {
     { href: '/caixa',         label: t.nav.cashflow,   icon: Wallet },
     { href: '/dre',           label: t.nav.dre,        icon: FileText },
     { href: '/configuracoes', label: t.nav.settings,   icon: Settings },
+    { href: '/ajuda',         label: t.nav.help,        icon: HelpCircle },
   ];
 
   return (
