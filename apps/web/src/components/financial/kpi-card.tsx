@@ -5,7 +5,7 @@ import type { LucideIcon } from 'lucide-react';
 import { CurrencyValue } from './currency-value';
 import { DeltaBadge } from './delta-badge';
 import { formatNumber, formatPercent } from '@/lib/format';
-import { AlertTriangle } from '@/lib/icons';
+import { HelpCircle } from '@/lib/icons';
 
 interface KpiCardProps {
   title: string;
@@ -36,7 +36,7 @@ export function KpiCard({
             <p className="text-sm font-medium text-muted-foreground truncate">{title}</p>
             {warningLabel && !loading && (
               <span title={warningLabel} className="shrink-0 cursor-help">
-                <AlertTriangle className="h-3.5 w-3.5 text-warning" />
+                <HelpCircle className="h-3.5 w-3.5 text-warning" />
               </span>
             )}
           </div>
