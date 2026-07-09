@@ -18,11 +18,11 @@ import {
 
 const RevenueAreaChart = dynamic(
   () => import('@/components/charts/revenue-area-chart').then((m) => m.RevenueAreaChart),
-  { ssr: false, loading: () => <Card className="h-64 animate-pulse bg-muted" /> },
+  { ssr: false, loading: () => <Card className="h-64 animate-pulse rounded-lg border border-border bg-muted ring-0 shadow-none" /> },
 );
 const PaymentDonutChart = dynamic(
   () => import('@/components/charts/payment-donut-chart').then((m) => m.PaymentDonutChart),
-  { ssr: false, loading: () => <Card className="h-64 animate-pulse bg-muted" /> },
+  { ssr: false, loading: () => <Card className="h-64 animate-pulse rounded-lg border border-border bg-muted ring-0 shadow-none" /> },
 );
 
 export default function DashboardPage() {
@@ -43,16 +43,17 @@ export default function DashboardPage() {
     today:     t.dashboard.vsYesterday,
     yesterday: t.dashboard.vsDayBefore,
     week:      t.dashboard.vsPrevWeek,
+    days30:    t.dashboard.vsPrevMonth,
     month:     t.dashboard.vsPrevMonth,
   }[period];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">{t.dashboard.title}</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t.dashboard.title}</h1>
+          <p className="text-sm text-muted-foreground first-letter:capitalize">
             {new Date().toLocaleDateString(t.locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
         </div>
@@ -66,7 +67,7 @@ export default function DashboardPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <KpiCard
           title={t.dashboard.grossRevenue}
           value={overview?.grossRevenue ?? 0}
@@ -104,7 +105,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Gráficos principais */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2">
           <RevenueAreaChart
             data={hourly.map((h) => ({ hora: h.hour, receita: h.receita }))}
@@ -120,14 +121,14 @@ export default function DashboardPage() {
       </div>
 
       {/* Top produtos + métricas secundárias */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2">
           <TopProductsTable data={products} loading={loadingProducts} />
         </div>
         <div>
-          <Card>
-            <p className="text-base font-semibold text-foreground mb-4">{t.dashboard.financialSummary}</p>
-            <div className="space-y-3">
+          <Card className="rounded-lg border border-border bg-card p-5 shadow-sm ring-0 transition-shadow duration-200 hover:shadow-md">
+            <p className="card-title mb-4">{t.dashboard.financialSummary}</p>
+            <div className="divide-y divide-border/60">
               {[
                 { label: t.dashboard.discounts,   value: overview?.discountsTotal, color: 'text-warning'  },
                 { label: t.dashboard.netRevenue,  value: overview?.revenueNet,     color: 'text-foreground' },
@@ -135,10 +136,10 @@ export default function DashboardPage() {
                 { label: t.dashboard.grossProfit, value: overview?.grossProfit,    color: 'text-positive' },
                 { label: t.dashboard.refunds,     value: overview?.refundsTotal,   color: 'text-negative' },
               ].map((row) => (
-                <div key={row.label} className="flex items-center justify-between py-1.5 border-b border-border last:border-0">
+                <div key={row.label} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
                   <span className="text-sm text-muted-foreground">{row.label}</span>
                   {loadingOverview ? (
-                    <div className="h-4 w-24 bg-muted animate-pulse rounded" />
+                    <div className="h-4 w-24 bg-muted animate-pulse rounded-md" />
                   ) : (
                     <span className={`text-sm financial-value font-medium ${row.color}`}>
                       {row.value != null

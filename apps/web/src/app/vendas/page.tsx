@@ -29,7 +29,7 @@ interface Receipt {
   id: string;
   externalId: string;
   type: 'sale' | 'refund';
-  totalMoney: number;
+  totalAmount: number;
   totalDiscount: number;
   createdAt: string;
   employee: { id: string; name: string } | null;
@@ -60,7 +60,7 @@ function ReceiptRow({ receipt, locale, paymentLabel, saleLabel, refundLabel, ite
   return (
     <>
       <tr
-        className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
+        className="border-b border-border/60 last:border-0 hover:bg-muted/60 transition-colors cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >
         <td className="px-4 py-3 whitespace-nowrap">
@@ -74,14 +74,14 @@ function ReceiptRow({ receipt, locale, paymentLabel, saleLabel, refundLabel, ite
         <td className="px-4 py-3">
           <span className={cn(
             'inline-flex px-2 py-0.5 rounded-full text-xs font-medium',
-            isRefund ? 'bg-negative/10 text-negative' : 'bg-positive/10 text-positive',
+            isRefund ? 'bg-negative-muted text-negative' : 'bg-positive-muted text-positive',
           )}>
             {isRefund ? refundLabel : saleLabel}
           </span>
         </td>
         <td className="px-4 py-3 text-right">
           <span className={cn('text-sm font-medium financial-value', isRefund ? 'text-negative' : 'text-foreground')}>
-            {isRefund ? '-' : ''}{formatCurrency(receipt.totalMoney)}
+            {isRefund ? '-' : ''}{formatCurrency(receipt.totalAmount)}
           </span>
         </td>
         <td className="px-4 py-3 text-sm text-muted-foreground">
@@ -105,9 +105,9 @@ function ReceiptRow({ receipt, locale, paymentLabel, saleLabel, refundLabel, ite
         </td>
       </tr>
       {expanded && (
-        <tr className="border-b border-border bg-muted/20">
-          <td colSpan={7} className="px-6 py-3">
-            <div className="space-y-1">
+        <tr className="border-b border-border/60 bg-muted/30">
+          <td colSpan={7} className="px-6 py-3.5">
+            <div className="space-y-1.5">
               {receipt.lineItems.map((item, i) => (
                 <div key={i} className="flex items-center justify-between text-xs">
                   <span className="text-foreground">
@@ -123,7 +123,7 @@ function ReceiptRow({ receipt, locale, paymentLabel, saleLabel, refundLabel, ite
                 </div>
               ))}
               {receipt.payments.length > 1 && (
-                <div className="pt-2 mt-2 border-t border-border space-y-1">
+                <div className="pt-2 mt-2 border-t border-border/60 space-y-1.5">
                   {receipt.payments.map((p, i) => (
                     <div key={i} className="flex items-center justify-between text-xs">
                       <span className="text-muted-foreground">
@@ -192,11 +192,11 @@ export default function VendasPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">{t.sales.title}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{t.sales.subtitle}</p>
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t.sales.title}</h1>
+          <p className="text-sm text-muted-foreground">{t.sales.subtitle}</p>
         </div>
         <PeriodSelector
           value={period}
@@ -207,14 +207,16 @@ export default function VendasPage() {
         />
       </div>
 
-      <Card className="p-0 overflow-hidden">
-        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-            <p className="text-base font-semibold text-foreground">{t.sales.receipts}</p>
+      <Card className="rounded-lg border border-border bg-card p-0 shadow-sm ring-0 transition-shadow duration-200 hover:shadow-md overflow-hidden">
+        <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-brand-muted shrink-0">
+              <ShoppingBag className="h-[18px] w-[18px] text-brand" />
+            </div>
+            <p className="card-title">{t.sales.receipts}</p>
           </div>
           {pg && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground financial-value">
               {pg.total.toLocaleString(t.locale)} {t.sales.transactions}
             </p>
           )}
@@ -223,7 +225,7 @@ export default function VendasPage() {
         {loading ? (
           <div className="space-y-0">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-14 bg-muted animate-pulse border-b border-border last:border-0" />
+              <div key={i} className="h-14 bg-muted/70 animate-pulse border-b border-border/60 last:border-0" />
             ))}
           </div>
         ) : !data?.receipts.length ? (
@@ -235,10 +237,10 @@ export default function VendasPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-border bg-muted/50">
+                  <tr className="border-b border-border bg-muted/40">
                     {tableHeaders.map((h, i) => (
                       <th key={i} className={cn(
-                        'text-xs font-medium text-muted-foreground px-4 py-3 whitespace-nowrap',
+                        'text-xs font-medium uppercase tracking-wide text-muted-foreground px-4 py-3 whitespace-nowrap',
                         h === t.sales.total || h === t.sales.items ? 'text-right' : 'text-left',
                       )}>
                         {h}
@@ -264,8 +266,8 @@ export default function VendasPage() {
             </div>
 
             {pg && pg.totalPages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-                <p className="text-xs text-muted-foreground">
+              <div className="flex items-center justify-between px-5 py-3 border-t border-border">
+                <p className="text-xs text-muted-foreground financial-value">
                   {t.sales.page} {pg.page} {t.sales.of} {pg.totalPages}
                 </p>
                 <div className="flex items-center gap-1">

@@ -18,18 +18,23 @@ export function PeriodSelector({ value, onChange, customFrom = '', customTo = ''
   const [localFrom, setLocalFrom] = useState(customFrom);
   const [localTo, setLocalTo] = useState(customTo);
 
-  // Reset local state when switching away from custom
+  // Sync local state when switching between presets and custom
   useEffect(() => {
     if (value !== 'custom') {
       setLocalFrom('');
       setLocalTo('');
+    } else {
+      setLocalFrom(customFrom);
+      setLocalTo(customTo);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
   const presets: { value: Period; label: string }[] = [
     { value: 'today',     label: t.period.today },
     { value: 'yesterday', label: t.period.yesterday },
     { value: 'week',      label: t.period.week },
+    { value: 'days30',    label: t.period.days30 },
     { value: 'month',     label: t.period.month },
     { value: 'custom',    label: t.period.custom },
   ];
@@ -42,7 +47,7 @@ export function PeriodSelector({ value, onChange, customFrom = '', customTo = ''
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+      <div className="flex items-center gap-0.5 bg-muted border border-border/60 rounded-lg p-1">
         {presets.map((opt) => (
           <button
             key={opt.value}
@@ -50,8 +55,8 @@ export function PeriodSelector({ value, onChange, customFrom = '', customTo = ''
             className={cn(
               'px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap',
               value === opt.value
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground',
+                ? 'bg-card text-foreground shadow-sm ring-1 ring-border/60'
+                : 'text-muted-foreground hover:text-foreground hover:bg-background/60',
             )}
           >
             {opt.label}

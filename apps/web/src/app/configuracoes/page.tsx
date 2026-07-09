@@ -8,8 +8,8 @@ import { Moon, Sun } from '@/lib/icons';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-6 space-y-4">
-      <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+    <div className="rounded-lg border border-border bg-card p-5 space-y-4 shadow-sm transition-shadow duration-200 hover:shadow-md">
+      <h2 className="card-title">{title}</h2>
       {children}
     </div>
   );
@@ -89,9 +89,9 @@ export default function ConfiguracoesPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{s.title}</h1>
+    <div className="space-y-7 max-w-2xl">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">{s.title}</h1>
       </div>
 
       {/* ── Appearance ── */}
@@ -148,7 +148,7 @@ export default function ConfiguracoesPage() {
           <button
             type="submit"
             disabled={nameStatus === 'saving'}
-            className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 whitespace-nowrap"
+            className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 whitespace-nowrap transition-colors"
           >
             {nameStatus === 'saving' ? s.saving : nameStatus === 'saved' ? s.saved : s.save}
           </button>
@@ -198,12 +198,12 @@ export default function ConfiguracoesPage() {
           </div>
           {pwdError && <p className="text-xs text-destructive">{pwdError}</p>}
           {pwdStatus === 'saved' && (
-            <p className="text-xs text-[hsl(var(--positive))]">{s.passwordChanged}</p>
+            <p className="text-xs text-positive">{s.passwordChanged}</p>
           )}
           <button
             type="submit"
             disabled={pwdStatus === 'saving'}
-            className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50"
+            className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
           >
             {pwdStatus === 'saving' ? s.saving : s.changePassword}
           </button>

@@ -26,27 +26,27 @@ export function KpiCard({
   loading,
 }: KpiCardProps) {
   return (
-    <Card className="animate-fade-in">
-      <div className="flex items-start justify-between">
+    <Card className="animate-fade-in rounded-lg border border-border bg-card p-5 shadow-sm ring-0 transition-shadow duration-200 hover:shadow-md">
+      <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <p className="text-sm text-muted-foreground truncate">{title}</p>
+          <p className="text-sm font-medium text-muted-foreground truncate">{title}</p>
           {loading ? (
-            <div className="h-8 w-32 bg-muted animate-pulse rounded mt-1" />
+            <div className="h-8 w-32 bg-muted animate-pulse rounded-md mt-2" />
           ) : (
-            <p className="financial-value text-2xl font-semibold mt-1 truncate">
-              {format === 'currency' && <CurrencyValue cents={value} size="xl" />}
+            <p className="financial-value text-2xl font-semibold tracking-tight text-foreground mt-2 truncate">
+              {format === 'currency' && <CurrencyValue cents={value} size="xl" className="text-2xl tracking-tight" />}
               {format === 'count'    && formatNumber(value)}
               {format === 'percent'  && formatPercent(value)}
             </p>
           )}
           {deltaPercent != null && deltaLabel && !loading && (
-            <div className="mt-2">
+            <div className="mt-3">
               <DeltaBadge percent={deltaPercent} label={deltaLabel} />
             </div>
           )}
         </div>
-        <div className="ml-4 p-2 bg-brand-muted rounded-lg shrink-0">
-          <Icon className="h-5 w-5 text-brand" />
+        <div className="flex h-9 w-9 items-center justify-center rounded-md bg-brand-muted shrink-0">
+          <Icon className="h-[18px] w-[18px] text-brand" />
         </div>
       </div>
     </Card>

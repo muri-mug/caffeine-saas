@@ -380,10 +380,10 @@ const ICONS: Record<string, React.ElementType> = {
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border-b border-border last:border-0">
+    <div>
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-start justify-between gap-3 py-3 text-left"
+        className="w-full flex items-start justify-between gap-3 py-3 text-left transition-colors hover:text-foreground"
       >
         <span className="text-sm font-medium text-foreground">{q}</span>
         {open
@@ -403,19 +403,19 @@ function SectionCard({ section }: { section: typeof content.pt.sections[number] 
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="rounded-lg border border-border bg-card p-5 shadow-sm ring-0 transition-shadow duration-200 hover:shadow-md overflow-hidden">
       {/* Header */}
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-start justify-between gap-4 text-left"
       >
         <div className="flex items-start gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg shrink-0">
-            <Icon className="h-5 w-5 text-primary" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-brand-muted shrink-0">
+            <Icon className="h-[18px] w-[18px] text-brand" />
           </div>
           <div>
-            <p className="text-base font-semibold text-foreground">{section.title}</p>
-            <p className="text-sm text-muted-foreground mt-0.5 leading-relaxed">{section.description}</p>
+            <p className="card-title">{section.title}</p>
+            <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{section.description}</p>
           </div>
         </div>
         {expanded
@@ -425,15 +425,15 @@ function SectionCard({ section }: { section: typeof content.pt.sections[number] 
       </button>
 
       {expanded && (
-        <div className="mt-5 space-y-6">
+        <div className="mt-5 space-y-6 border-t border-border/60 pt-5">
           {/* Glossário */}
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
               O que cada indicador significa
             </p>
-            <div className="space-y-2">
+            <div className="divide-y divide-border/60">
               {section.what.map((item) => (
-                <div key={item.term} className="flex gap-2 text-sm">
+                <div key={item.term} className="flex gap-2 text-sm py-2 first:pt-0 last:pb-0">
                   <span className="font-medium text-foreground shrink-0">{item.term}:</span>
                   <span className="text-muted-foreground">{item.def}</span>
                 </div>
@@ -446,7 +446,7 @@ function SectionCard({ section }: { section: typeof content.pt.sections[number] 
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
               Perguntas frequentes
             </p>
-            <div>
+            <div className="divide-y divide-border/60">
               {section.faqs.map((faq) => (
                 <FaqItem key={faq.q} q={faq.q} a={faq.a} />
               ))}
@@ -465,26 +465,28 @@ export default function AjudaPage() {
   const c = content[lang] ?? content.pt;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground">{c.title}</h1>
-        <p className="text-sm text-muted-foreground mt-1">{c.subtitle}</p>
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">{c.title}</h1>
+        <p className="text-sm text-muted-foreground">{c.subtitle}</p>
       </div>
 
       {/* Nota sobre Loyverse */}
-      <Card className="border-primary/20 bg-primary/5">
+      <Card className="rounded-lg border border-brand/20 bg-brand/5 p-5 shadow-sm ring-0">
         <div className="flex items-start gap-3">
-          <HelpCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-brand-muted shrink-0">
+            <HelpCircle className="h-[18px] w-[18px] text-brand" />
+          </div>
           <div>
-            <p className="text-sm font-semibold text-foreground">{c.loyverseNote}</p>
+            <p className="card-title">{c.loyverseNote}</p>
             <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{c.loyverseDesc}</p>
           </div>
         </div>
       </Card>
 
       {/* Seções */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         {c.sections.map((section) => (
           <SectionCard key={section.id} section={section} />
         ))}

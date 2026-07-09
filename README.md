@@ -71,15 +71,21 @@ src/
 │   ├── dashboard/page.tsx     # Visão geral e KPIs
 │   ├── vendas/page.tsx        # Tabela de recibos com linhas expansíveis
 │   ├── estoque/page.tsx       # Inventário e níveis de estoque
-│   ├── dre/page.tsx           # Demonstrativo de resultado
+│   ├── dre/page.tsx           # Demonstrativo de resultado com seletor de mês
 │   └── caixa/page.tsx         # Fluxo de caixa e turnos
 ├── components/
-│   ├── layout/                # Sidebar, TopBar, DashboardShell
+│   ├── layout/
+│   │   ├── sidebar.tsx        # Navegação lateral
+│   │   └── topbar.tsx         # Barra superior com botão Sincronizar funcional
 │   ├── charts/                # Componentes de gráfico (Tremor)
-│   ├── financial/             # Componentes de tabelas financeiras
+│   ├── financial/
+│   │   └── period-selector.tsx  # Seletor de período: Hoje/Ontem/7d/30d/Mês/Período
 │   └── shared/                # Componentes reutilizáveis
+├── hooks/
+│   └── use-dashboard.ts       # Hooks de fetch; Period = today|yesterday|week|days30|month|custom
 ├── lib/
-│   ├── api.ts                 # Fetch wrapper com Bearer token
+│   ├── api.ts                 # Fetch wrapper com Bearer token + triggerSync()
+│   ├── i18n.ts                # Traduções pt-BR / en (period.days30 incluído)
 │   ├── icons.ts               # Re-exports centralizados de lucide-react
 │   └── format.ts              # formatCurrency, formatNumber, formatPercent
 └── __tests__/                 # Testes unitários Vitest
@@ -172,25 +178,30 @@ Constraint de unicidade composta em todos os registros sincronizados: `(tenantId
 
 ## Módulos
 
-### Dashboard
-KPIs do dia/semana/mês: receita, ticket médio, total de vendas, clientes únicos. Gráfico de receita por período.
+### Dashboard (`/dashboard`)
+KPIs financeiros com seletor de período: **Hoje / Ontem / 7 dias / 30 dias / Mês / Período personalizado**.
+- Receita bruta, Nº de vendas, Ticket médio, Margem bruta
+- Gráfico de receita por hora (Tremor AreaChart)
+- Formas de pagamento (DonutChart)
+- Top 8 produtos por receita
+- Resumo financeiro: descontos, receita líquida, CMV, lucro bruto, devoluções
 
 ### Vendas (`/vendas`)
 Tabela paginada (50/página) de recibos com:
 - Badge Venda / Estorno
 - Expandir linha para ver itens e forma de pagamento
-- Seletor de período (Hoje / Semana / Mês)
+- Seletor de período: Hoje / Ontem / 7 dias / 30 dias / Mês / Período personalizado
+- Valores monetários em `totalAmount` (centavos, convertidos na exibição)
 
 ### Estoque (`/estoque`)
 Lista de produtos com nível de estoque por loja. Alertas de estoque baixo.
 
 ### DRE (`/dre`)
-Demonstrativo de Resultado do Exercício:
-- Receita bruta de vendas
-- CMV (custo das mercadorias vendidas)
-- Lucro bruto
-- Despesas operacionais (lançamentos manuais por categoria)
-- EBITDA estimado
+Demonstrativo de Resultado do Exercício com seletor de mês:
+- **Este mês** / **Mês anterior** — atalhos rápidos
+- **Escolher mês** — `<input type="month">` para selecionar qualquer mês/ano
+- Receita bruta → Devoluções → Descontos → Impostos → Receita líquida → CMV → Lucro bruto → EBITDA
+- Lançamento manual de despesas operacionais por categoria (aluguel, salário, utilidades, outros)
 
 ### Caixa (`/caixa`)
 Análise de fluxo de caixa por turno e período. Saldo de abertura/fechamento.
@@ -225,7 +236,13 @@ POST /auth/login { slug, password }
 → 200 { token: "eyJ..." }
 
 Todas as rotas protegidas:
-GET /api/dashboard
+GET  /api/dashboard/overview?period=today|yesterday|week|days30|month|custom&from=&to=
+GET  /api/dashboard/hourly
+GET  /api/dashboard/payments
+GET  /api/dashboard/top-products
+GET  /api/dre?period=month|lastmonth|custom&from=&to=
+GET  /api/receipts?period=...&page=&pageSize=
+POST /providers/sync              # dispara sync incremental em background
 Authorization: Bearer eyJ...
 ```
 
@@ -244,7 +261,8 @@ Pull completo: stores, categories, items, inventory, employees, payment types, �
 ### Sync incremental
 - Agendado a cada 15 minutos via cron (BullMQ)
 - Filtra por `updated_at > lastSyncAt`
-- Também disponível manualmente via `POST /providers/sync`
+- Disponível manualmente via `POST /providers/sync` (autenticado)
+- Botão **Sincronizar** na topbar dispara o sync incremental e exibe ícone giratório durante execução
 
 ### Webhooks
 - `POST /api/webhooks/:providerId`

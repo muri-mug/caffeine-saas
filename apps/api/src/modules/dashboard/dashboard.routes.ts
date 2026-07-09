@@ -17,6 +17,8 @@ function parseDateRange(query: Record<string, string | undefined>) {
       return { from: startOfDay(subDays(now, 1)), to: endOfDay(subDays(now, 1)) };
     case 'week':
       return { from: startOfDay(subDays(now, 6)), to: endOfDay(now) };
+    case 'days30':
+      return { from: startOfDay(subDays(now, 29)), to: endOfDay(now) };
     case 'month':
       return { from: startOfMonth(now), to: endOfMonth(now) };
     case 'custom': {

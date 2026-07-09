@@ -47,7 +47,7 @@ function DonutSVG({ data }: { data: { name: string; amount: number }[] }) {
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
       {slices.map((s, i) => (
-        <path key={i} d={s.d} fill={s.color} stroke="white" strokeWidth="1.5" />
+        <path key={i} d={s.d} fill={s.color} stroke="hsl(var(--card))" strokeWidth="2" />
       ))}
     </svg>
   );
@@ -56,28 +56,31 @@ function DonutSVG({ data }: { data: { name: string; amount: number }[] }) {
 export function PaymentDonutChart({ data, loading }: PaymentDonutChartProps) {
   const t = useT();
 
-  if (loading) return <Card className="h-64 animate-pulse bg-muted" />;
+  if (loading) return <Card className="h-64 animate-pulse rounded-lg border border-border bg-muted ring-0 shadow-none" />;
 
   const total = data.reduce((s, d) => s + d.amount, 0);
 
   return (
-    <Card>
-      <p className="text-base font-semibold text-foreground">{t.dashboard.paymentMethods}</p>
-      <div className="mt-4 flex flex-col items-center gap-4">
+    <Card className="rounded-lg border border-border bg-card p-5 shadow-sm ring-0 transition-shadow duration-200 hover:shadow-md">
+      <p className="card-title">{t.dashboard.paymentMethods}</p>
+      <div className="mt-5 flex flex-col items-center gap-5">
         <div className="relative">
           <DonutSVG data={data} />
           {total > 0 && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-xs font-medium text-muted-foreground financial-value">
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-xs font-semibold text-foreground financial-value">
                 {formatCurrency(total)}
               </span>
             </div>
           )}
         </div>
-        <div className="w-full space-y-1.5">
+        <div className="w-full space-y-0.5">
           {data.map((d, i) => (
-            <div key={d.name} className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-1.5">
+            <div
+              key={d.name}
+              className="flex items-center justify-between text-xs rounded-md px-2 py-1.5 -mx-2 transition-colors hover:bg-muted/60"
+            >
+              <div className="flex items-center gap-2">
                 <span
                   className="inline-block h-2.5 w-2.5 rounded-full flex-shrink-0"
                   style={{ backgroundColor: COLORS[i % COLORS.length] }}
