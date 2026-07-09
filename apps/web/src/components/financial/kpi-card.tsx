@@ -6,6 +6,7 @@ import { CurrencyValue } from './currency-value';
 import { DeltaBadge } from './delta-badge';
 import { formatNumber, formatPercent } from '@/lib/format';
 import { HelpCircle } from '@/lib/icons';
+import { Tooltip } from '@/components/shared/tooltip';
 
 interface KpiCardProps {
   title: string;
@@ -35,9 +36,11 @@ export function KpiCard({
           <div className="flex items-center gap-1.5">
             <p className="text-sm font-medium text-muted-foreground truncate">{title}</p>
             {warningLabel && !loading && (
-              <span title={warningLabel} className="shrink-0 cursor-help">
-                <HelpCircle className="h-3.5 w-3.5 text-warning" />
-              </span>
+              <Tooltip content={warningLabel}>
+                <span tabIndex={0} className="shrink-0 cursor-help">
+                  <HelpCircle className="h-3.5 w-3.5 text-warning" />
+                </span>
+              </Tooltip>
             )}
           </div>
           {loading ? (
