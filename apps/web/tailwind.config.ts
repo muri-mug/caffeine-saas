@@ -8,6 +8,13 @@ const config: Config = {
     './src/app/**/*.{ts,tsx}',
     './node_modules/@tremor/**/*.{js,ts,jsx,tsx}',
   ],
+  // Tremor monta classes de cor dinamicamente (ex: `fill-blue-500`),
+  // então o Tailwind não as detecta no scan de conteúdo — safelist garante que existam.
+  safelist: [
+    {
+      pattern: /^(bg|text|stroke|fill|border|ring)-(blue|gray|slate|cyan|orange|emerald|rose|violet|amber)-(100|200|300|400|500|600|700|900)$/,
+    },
+  ],
   theme: {
     extend: {
       colors: {

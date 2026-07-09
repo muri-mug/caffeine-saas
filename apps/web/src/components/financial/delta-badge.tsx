@@ -14,20 +14,20 @@ export function DeltaBadge({ percent, label, size = 'sm' }: DeltaBadgeProps) {
   const absPercent = Math.abs(percent).toFixed(1);
 
   return (
-    <span className="flex items-center gap-1">
+    <span className="flex items-center gap-1.5">
       <span
         className={cn(
-          'inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-medium',
+          'inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium financial-value',
           size === 'sm' ? 'text-xs' : 'text-sm',
-          isPositive && 'bg-positive/12 text-positive',
+          isPositive && 'bg-positive-muted text-positive',
           isNeutral  && 'bg-muted text-muted-foreground',
-          !isPositive && !isNeutral && 'bg-negative/12 text-negative',
+          !isPositive && !isNeutral && 'bg-negative-muted text-negative',
         )}
       >
         <Icon className={size === 'sm' ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
         {absPercent}%
       </span>
-      {label && <span className="text-xs text-muted-foreground">{label}</span>}
+      {label && <span className="text-xs text-muted-foreground truncate">{label}</span>}
     </span>
   );
 }

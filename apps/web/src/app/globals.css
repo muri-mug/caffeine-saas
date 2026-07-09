@@ -5,7 +5,7 @@
 /* ── Tema padrão Sarta ──────────────────────────────────────────────────────── */
 @layer base {
   :root {
-    --background:         0 0% 98%;
+    --background:         210 25% 98%;
     --foreground:         222 47% 11%;
     --card:               0 0% 100%;
     --card-foreground:    222 47% 11%;
@@ -32,18 +32,18 @@
     --ring:               221 83% 53%;
 
     /* ── Tokens financeiros semânticos ── */
-    --positive:            142 71% 45%;
+    --positive:            142 72% 33%;
     --positive-foreground: 0 0% 100%;
-    --negative:            0 84% 60%;
+    --negative:            0 72% 47%;
     --negative-foreground: 0 0% 100%;
-    --warning:             38 92% 50%;
+    --warning:             32 95% 40%;
     --warning-foreground:  0 0% 100%;
 
     /* ── Marca (sobrescrito por tenant) ── */
     --brand-primary:            221 83% 53%;
     --brand-primary-foreground: 0 0% 100%;
 
-    --radius: 0.5rem;
+    --radius: 0.625rem;
   }
 
   .dark {
@@ -63,8 +63,8 @@
     --accent-foreground:  210 40% 98%;
     --destructive:        0 63% 31%;
     --destructive-foreground: 210 40% 98%;
-    --border:             217 33% 17%;
-    --input:              217 33% 17%;
+    --border:             217 33% 21%;
+    --input:              217 33% 21%;
     --ring:               224 76% 48%;
     --positive:           142 71% 45%;
     --positive-foreground: 0 0% 100%;
@@ -77,10 +77,17 @@
 
 @layer base {
   * { @apply border-border; }
-  body { @apply bg-background text-foreground; }
+  body { @apply bg-background text-foreground antialiased; }
 
   /* Números financeiros sempre em fonte mono */
   .financial-value {
     @apply font-mono tabular-nums;
+  }
+}
+
+@layer components {
+  /* Título padrão de seções/cards */
+  .card-title {
+    @apply text-sm font-semibold tracking-tight text-foreground;
   }
 }

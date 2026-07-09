@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
 
-export type Period = 'today' | 'yesterday' | 'week' | 'month' | 'custom';
+export type Period = 'today' | 'yesterday' | 'week' | 'days30' | 'month' | 'custom';
 
 function periodParams(period: Period, from?: string, to?: string) {
   return period === 'custom' && from && to ? { period: 'custom', from, to } : { period };

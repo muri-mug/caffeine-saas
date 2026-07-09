@@ -117,6 +117,19 @@ class ApiClient {
       `/api/dashboard/top-products?${qs}`,
     );
   }
+
+  async triggerSync() {
+    const token = this.getToken();
+    const res = await fetch(`${API_URL}/providers/sync`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error ?? `HTTP ${res.status}`);
+    }
+    return res.json() as Promise<{ message: string }>;
+  }
 }
 
 export const api = new ApiClient();

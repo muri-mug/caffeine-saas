@@ -43,9 +43,9 @@ export default function CaixaPage() {
   const t = useT();
 
   const statusBadge: Record<string, string> = {
-    ok:        'bg-positive/10 text-positive',
-    low_diff:  'bg-warning/10 text-warning',
-    high_diff: 'bg-negative/10 text-negative',
+    ok:        'bg-positive-muted text-positive',
+    low_diff:  'bg-warning-muted text-warning',
+    high_diff: 'bg-negative-muted text-negative',
     open:      'bg-muted text-muted-foreground',
   };
   const statusLabel: Record<string, string> = {
@@ -72,11 +72,11 @@ export default function CaixaPage() {
   const s = data?.summary;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">{t.cashflow.title}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{t.cashflow.subtitle}</p>
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t.cashflow.title}</h1>
+          <p className="text-sm text-muted-foreground">{t.cashflow.subtitle}</p>
         </div>
         <PeriodSelector
           value={period}
@@ -88,27 +88,27 @@ export default function CaixaPage() {
       </div>
 
       {/* Resumo do período */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {[
-          { label: t.cashflow.netRevenue,      value: s?.totalNetRevenue,     icon: Wallet,        color: 'text-positive' },
-          { label: t.cashflow.cashInflows,     value: s?.totalCashReceived,   icon: ArrowUpRight,  color: 'text-positive' },
-          { label: t.cashflow.cashOutflows,    value: s?.totalCashPaidOut,    icon: ArrowDownLeft, color: 'text-negative' },
-          { label: t.cashflow.totalDifference, value: s?.totalCashDifference, icon: Scale,         color: (s?.totalCashDifference ?? 0) === 0 ? 'text-positive' : 'text-negative' },
-        ].map(({ label, value, icon: Icon, color }) => (
-          <Card key={label} className="animate-fade-in">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{label}</p>
+          { label: t.cashflow.netRevenue,      value: s?.totalNetRevenue,     icon: Wallet,        color: 'text-positive', iconBox: 'bg-positive-muted text-positive' },
+          { label: t.cashflow.cashInflows,     value: s?.totalCashReceived,   icon: ArrowUpRight,  color: 'text-positive', iconBox: 'bg-positive-muted text-positive' },
+          { label: t.cashflow.cashOutflows,    value: s?.totalCashPaidOut,    icon: ArrowDownLeft, color: 'text-negative', iconBox: 'bg-negative-muted text-negative' },
+          { label: t.cashflow.totalDifference, value: s?.totalCashDifference, icon: Scale,         color: (s?.totalCashDifference ?? 0) === 0 ? 'text-positive' : 'text-negative', iconBox: (s?.totalCashDifference ?? 0) === 0 ? 'bg-positive-muted text-positive' : 'bg-negative-muted text-negative' },
+        ].map(({ label, value, icon: Icon, color, iconBox }) => (
+          <Card key={label} className="animate-fade-in rounded-lg border border-border bg-card p-5 shadow-sm ring-0 transition-shadow duration-200 hover:shadow-md">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-muted-foreground truncate">{label}</p>
                 {loading ? (
-                  <div className="h-7 w-28 bg-muted animate-pulse rounded mt-1" />
+                  <div className="h-8 w-28 bg-muted animate-pulse rounded-md mt-2" />
                 ) : (
-                  <p className={cn('text-xl font-semibold financial-value mt-1', color)}>
+                  <p className={cn('financial-value text-2xl font-semibold tracking-tight mt-2 truncate', color)}>
                     {value != null ? formatCurrency(value) : '—'}
                   </p>
                 )}
               </div>
-              <div className="p-2 bg-muted rounded-lg">
-                <Icon className="h-4 w-4 text-muted-foreground" />
+              <div className={cn('flex h-9 w-9 items-center justify-center rounded-md shrink-0', iconBox)}>
+                <Icon className="h-[18px] w-[18px]" />
               </div>
             </div>
           </Card>
@@ -116,11 +116,11 @@ export default function CaixaPage() {
       </div>
 
       {/* Tabela de turnos */}
-      <Card className="p-0 overflow-hidden">
-        <div className="px-4 py-3 border-b border-border">
-          <p className="text-base font-semibold text-foreground">{t.cashflow.shifts}</p>
+      <Card className="rounded-lg border border-border bg-card p-0 shadow-sm ring-0 transition-shadow duration-200 hover:shadow-md overflow-hidden">
+        <div className="px-5 py-4 border-b border-border">
+          <p className="card-title">{t.cashflow.shifts}</p>
           {s && (
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs text-muted-foreground mt-1">
               {s.closedShifts} {t.cashflow.closed} · {s.openShifts} {t.cashflow.open} · {s.shiftsWithDifference} {t.cashflow.withDifference}
             </p>
           )}
@@ -129,7 +129,7 @@ export default function CaixaPage() {
         {loading ? (
           <div className="space-y-0">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-16 bg-muted animate-pulse border-b border-border last:border-0" />
+              <div key={i} className="h-16 bg-muted/70 animate-pulse border-b border-border/60 last:border-0" />
             ))}
           </div>
         ) : !data?.shifts.length ? (
@@ -140,13 +140,13 @@ export default function CaixaPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-border bg-muted/50">
+                <tr className="border-b border-border bg-muted/40">
                   {[
                     t.cashflow.shift, t.cashflow.employee, t.cashflow.opening,
                     t.cashflow.float, t.cashflow.expected, t.cashflow.counted,
                     t.cashflow.difference, t.cashflow.salesCol, t.cashflow.statusOk.split(' ')[0],
                   ].map((h) => (
-                    <th key={h} className="text-left text-xs font-medium text-muted-foreground px-3 py-3 whitespace-nowrap">
+                    <th key={h} className="text-left text-xs font-medium uppercase tracking-wide text-muted-foreground px-3 py-3 whitespace-nowrap">
                       {h}
                     </th>
                   ))}
@@ -161,7 +161,7 @@ export default function CaixaPage() {
                   const diff = shift.cashDifference ?? 0;
 
                   return (
-                    <tr key={shift.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                    <tr key={shift.id} className="border-b border-border/60 last:border-0 hover:bg-muted/60 transition-colors">
                       <td className="px-3 py-3 whitespace-nowrap">
                         <p className="text-sm text-foreground">{opened}</p>
                         <p className="text-xs text-muted-foreground">{t.cashflow.until} {closed}</p>

@@ -33,9 +33,9 @@ export default function EstoquePage() {
   const t = useT();
 
   const statusConfig: Record<StockStatus, { label: string; color: string; icon: React.ElementType }> = {
-    ok:        { label: t.inventory.statusOk,        color: 'text-positive bg-positive/10', icon: CheckCircle2 },
-    low:       { label: t.inventory.statusLow,       color: 'text-warning bg-warning/10',  icon: AlertTriangle },
-    out:       { label: t.inventory.statusOut,       color: 'text-negative bg-negative/10', icon: XCircle },
+    ok:        { label: t.inventory.statusOk,        color: 'text-positive bg-positive-muted', icon: CheckCircle2 },
+    low:       { label: t.inventory.statusLow,       color: 'text-warning bg-warning-muted',  icon: AlertTriangle },
+    out:       { label: t.inventory.statusOut,       color: 'text-negative bg-negative-muted', icon: XCircle },
     untracked: { label: t.inventory.statusUntracked, color: 'text-muted-foreground bg-muted', icon: Package },
   };
 
@@ -60,15 +60,15 @@ export default function EstoquePage() {
   }) ?? [];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground">{t.inventory.title}</h1>
-        <p className="text-sm text-muted-foreground mt-1">{t.inventory.subtitle}</p>
+    <div className="space-y-7">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t.inventory.title}</h1>
+        <p className="text-sm text-muted-foreground">{t.inventory.subtitle}</p>
       </div>
 
       {/* Resumo */}
       {data && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
           {(['ok', 'low', 'out', 'untracked'] as StockStatus[]).map((s) => {
             const cfg = statusConfig[s];
             const Icon = cfg.icon;
@@ -77,16 +77,16 @@ export default function EstoquePage() {
                 key={s}
                 onClick={() => setStatusFilter(statusFilter === s ? 'all' : s)}
                 className={cn(
-                  'text-left p-4 rounded-lg border transition-all',
-                  statusFilter === s ? 'border-primary ring-1 ring-primary' : 'border-border bg-card',
+                  'text-left p-5 rounded-lg border bg-card shadow-sm transition-all duration-200 hover:shadow-md',
+                  statusFilter === s ? 'border-primary ring-1 ring-primary' : 'border-border',
                 )}
               >
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-2">
                   <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium', cfg.color)}>
                     <Icon className="h-3 w-3" /> {cfg.label}
                   </span>
                 </div>
-                <p className="text-2xl font-semibold text-foreground financial-value">{data.summary[s]}</p>
+                <p className="text-2xl font-semibold tracking-tight text-foreground financial-value">{data.summary[s]}</p>
               </button>
             );
           })}
@@ -102,17 +102,17 @@ export default function EstoquePage() {
             placeholder={t.inventory.searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded-md bg-card shadow-sm focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
       </div>
 
       {/* Tabela */}
-      <Card className="p-0 overflow-hidden">
+      <Card className="rounded-lg border border-border bg-card p-0 shadow-sm ring-0 transition-shadow duration-200 hover:shadow-md overflow-hidden">
         {loading ? (
           <div className="space-y-0">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-14 bg-muted animate-pulse border-b border-border last:border-0" />
+              <div key={i} className="h-14 bg-muted/70 animate-pulse border-b border-border/60 last:border-0" />
             ))}
           </div>
         ) : filtered.length === 0 ? (
@@ -125,13 +125,13 @@ export default function EstoquePage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">{t.inventory.product}</th>
-                  <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">{t.inventory.category}</th>
-                  <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3">{t.inventory.price}</th>
-                  <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3">{t.inventory.inStock}</th>
-                  <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3">{t.inventory.minimum}</th>
-                  <th className="text-center text-xs font-medium text-muted-foreground px-4 py-3">{t.inventory.status}</th>
+                <tr className="border-b border-border bg-muted/40">
+                  <th className="text-left text-xs font-medium uppercase tracking-wide text-muted-foreground px-4 py-3">{t.inventory.product}</th>
+                  <th className="text-left text-xs font-medium uppercase tracking-wide text-muted-foreground px-4 py-3">{t.inventory.category}</th>
+                  <th className="text-right text-xs font-medium uppercase tracking-wide text-muted-foreground px-4 py-3">{t.inventory.price}</th>
+                  <th className="text-right text-xs font-medium uppercase tracking-wide text-muted-foreground px-4 py-3">{t.inventory.inStock}</th>
+                  <th className="text-right text-xs font-medium uppercase tracking-wide text-muted-foreground px-4 py-3">{t.inventory.minimum}</th>
+                  <th className="text-center text-xs font-medium uppercase tracking-wide text-muted-foreground px-4 py-3">{t.inventory.status}</th>
                 </tr>
               </thead>
               <tbody>
@@ -139,7 +139,7 @@ export default function EstoquePage() {
                   const cfg = statusConfig[item.stockStatus];
                   const Icon = cfg.icon;
                   return (
-                    <tr key={item.variantId} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                    <tr key={item.variantId} className="border-b border-border/60 last:border-0 hover:bg-muted/60 transition-colors">
                       <td className="px-4 py-3">
                         <p className="text-sm font-medium text-foreground">{item.itemName}</p>
                         {item.variantName !== 'Padrão' && item.variantName !== 'Default' && (
