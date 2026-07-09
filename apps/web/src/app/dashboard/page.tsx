@@ -8,6 +8,7 @@ import { PeriodSelector } from '@/components/financial/period-selector';
 import { TopProductsTable } from '@/components/financial/top-products-table';
 import { TrendingUp, Receipt, CreditCard, Percent } from '@/lib/icons';
 import { useT } from '@/lib/i18n';
+import { formatPercent } from '@/lib/format';
 import {
   useDashboardOverview,
   useHourlyRevenue,
@@ -102,6 +103,11 @@ export default function DashboardPage() {
           icon={Percent}
           format="percent"
           loading={loadingOverview}
+          warningLabel={
+            overview?.costCoveragePct != null && overview.costCoveragePct < 100
+              ? t.dashboard.costCoverageWarning.replace('{pct}', formatPercent(100 - overview.costCoveragePct))
+              : undefined
+          }
         />
       </div>
 

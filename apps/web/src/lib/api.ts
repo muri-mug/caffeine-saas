@@ -94,6 +94,7 @@ class ApiClient {
       revenueDelta?: number;
       transactionsDelta?: number;
       avgTicketDelta?: number;
+      costCoveragePct?: number;
     }>(`/api/dashboard/overview?${qs}`);
   }
 

@@ -5,6 +5,7 @@ import type { LucideIcon } from 'lucide-react';
 import { CurrencyValue } from './currency-value';
 import { DeltaBadge } from './delta-badge';
 import { formatNumber, formatPercent } from '@/lib/format';
+import { AlertTriangle } from '@/lib/icons';
 
 interface KpiCardProps {
   title: string;
@@ -14,6 +15,7 @@ interface KpiCardProps {
   icon: LucideIcon;
   format?: 'currency' | 'count' | 'percent';
   loading?: boolean;
+  warningLabel?: string;       // tooltip de alerta ao lado do título (ex: dado incompleto na origem)
 }
 
 export function KpiCard({
@@ -24,12 +26,20 @@ export function KpiCard({
   icon: Icon,
   format = 'currency',
   loading,
+  warningLabel,
 }: KpiCardProps) {
   return (
     <Card className="animate-fade-in rounded-lg border border-border bg-card p-5 shadow-sm ring-0 transition-shadow duration-200 hover:shadow-md">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-muted-foreground truncate">{title}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-medium text-muted-foreground truncate">{title}</p>
+            {warningLabel && !loading && (
+              <span title={warningLabel} className="shrink-0 cursor-help">
+                <AlertTriangle className="h-3.5 w-3.5 text-warning" />
+              </span>
+            )}
+          </div>
           {loading ? (
             <div className="h-8 w-32 bg-muted animate-pulse rounded-md mt-2" />
           ) : (

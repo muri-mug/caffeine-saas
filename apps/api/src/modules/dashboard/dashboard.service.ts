@@ -37,6 +37,7 @@ export interface OverviewMetrics {
   revenueDelta?: number;     // % variação vs período anterior
   transactionsDelta?: number;
   avgTicketDelta?: number;
+  costCoveragePct?: number;  // % da receita de itens com custo cadastrado na variante (Loyverse)
 }
 
 export interface HourlyRevenue {
@@ -58,7 +59,7 @@ export class DashboardService {
   async getOverview(tenantId: string, range: DateRange, storeId?: string): Promise<OverviewMetrics> {
     const where = this.buildReceiptWhere(tenantId, range, storeId);
 
-    const [sales, refunds, lineItemAgg] = await Promise.all([
+    const [sales, refunds, lineItemAgg, costCoverageAgg] = await Promise.all([
       this.prisma.receipt.aggregate({
         where: { ...where, type: 'sale' },
         _sum:   { subtotal: true, totalAmount: true, totalDiscount: true, totalTax: true },
@@ -70,7 +71,14 @@ export class DashboardService {
       }),
       this.prisma.receiptLineItem.aggregate({
         where: { receipt: { ...where, type: 'sale' } },
-        _sum: { totalCost: true },
+        _sum: { totalCost: true, totalPrice: true },
+      }),
+      // Receita de itens cuja variante tem custo cadastrado no Loyverse — usado
+      // pra sinalizar quando o CMV está subestimado por falta de dado na origem,
+      // não por não ter custo de fato.
+      this.prisma.receiptLineItem.aggregate({
+        where: { receipt: { ...where, type: 'sale' }, variant: { cost: { gt: 0 } } },
+        _sum: { totalPrice: true },
       }),
     ]);
 
@@ -85,6 +93,12 @@ export class DashboardService {
     const count        = sales._count.id;
     const refundsTotal = refunds._sum.totalAmount ?? 0;
     const avgTicket    = count > 0 ? Math.round(revenue / count) : 0;
+
+    const lineItemRevenue    = lineItemAgg._sum.totalPrice ?? 0;
+    const costCoveredRevenue = costCoverageAgg._sum.totalPrice ?? 0;
+    const costCoveragePct    = lineItemRevenue > 0
+      ? Math.round((costCoveredRevenue / lineItemRevenue) * 1000) / 10
+      : undefined;
 
     // Delta vs período anterior (compara grossRevenue para apples-to-apples)
     const prevRange = this.previousPeriod(range);
@@ -114,6 +128,7 @@ export class DashboardService {
       revenueDelta:      prevGross > 0  ? Math.round(((grossRevenue - prevGross) / prevGross) * 1000) / 10 : undefined,
       transactionsDelta: prevCount > 0  ? Math.round(((count - prevCount) / prevCount) * 1000) / 10 : undefined,
       avgTicketDelta:    prevAvg > 0    ? Math.round(((avgTicket - prevAvg) / prevAvg) * 1000) / 10 : undefined,
+      costCoveragePct,
     };
   }
 
