@@ -6,7 +6,7 @@ import { Card } from '@tremor/react';
 import { KpiCard } from '@/components/financial/kpi-card';
 import { PeriodSelector } from '@/components/financial/period-selector';
 import { TopProductsTable } from '@/components/financial/top-products-table';
-import { TrendingUp, Receipt, CreditCard, Percent } from '@/lib/icons';
+import { TrendingUp, Receipt, CreditCard, Percent, DollarSign } from '@/lib/icons';
 import { useT } from '@/lib/i18n';
 import { formatPercent } from '@/lib/format';
 import {
@@ -49,6 +49,10 @@ export default function DashboardPage() {
     custom:    t.dashboard.vsPrevPeriod,
   }[period];
 
+  const costCoverageWarning = overview?.costCoveragePct != null && overview.costCoveragePct < 100
+    ? t.dashboard.costCoverageWarning.replace('{pct}', formatPercent(100 - overview.costCoveragePct))
+    : undefined;
+
   return (
     <div className="space-y-7">
       {/* Header */}
@@ -69,7 +73,7 @@ export default function DashboardPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-5">
         <KpiCard
           title={t.dashboard.grossRevenue}
           value={overview?.grossRevenue ?? 0}
@@ -103,11 +107,15 @@ export default function DashboardPage() {
           icon={Percent}
           format="percent"
           loading={loadingOverview}
-          warningLabel={
-            overview?.costCoveragePct != null && overview.costCoveragePct < 100
-              ? t.dashboard.costCoverageWarning.replace('{pct}', formatPercent(100 - overview.costCoveragePct))
-              : undefined
-          }
+          warningLabel={costCoverageWarning}
+        />
+        <KpiCard
+          title={t.dashboard.netMargin}
+          value={overview?.netMarginPct ?? 0}
+          icon={DollarSign}
+          format="percent"
+          loading={loadingOverview}
+          warningLabel={costCoverageWarning}
         />
       </div>
 
