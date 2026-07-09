@@ -21,6 +21,8 @@ export interface DateRange {
 // revenueNet    = revenue - taxes   → Receita Líquida (após descontos e impostos embutidos)
 // grossProfit   = revenueNet - cmv  → Lucro Bruto
 // grossMarginPct = grossProfit / revenueNet × 100
+// netProfit     = grossProfit - despesas operacionais (Expense) → Lucro Líquido
+// netMarginPct  = netProfit / revenueNet × 100
 
 export interface OverviewMetrics {
   grossRevenue: number;      // centavos — preço cheio (antes de descontos)
@@ -29,6 +31,9 @@ export interface OverviewMetrics {
   costTotal: number;         // centavos — CMV (custo da mercadoria vendida)
   grossProfit: number;       // centavos — lucro bruto (revenueNet - CMV)
   grossMarginPct: number;    // % — margem bruta
+  expensesTotal: number;     // centavos — despesas operacionais no período (DRE)
+  netProfit: number;         // centavos — lucro líquido (grossProfit - expensesTotal)
+  netMarginPct: number;      // % — margem líquida
   transactionsCount: number;
   avgTicket: number;         // centavos — ticket médio (revenue / count)
   refundsTotal: number;      // centavos — total de devoluções
@@ -59,7 +64,7 @@ export class DashboardService {
   async getOverview(tenantId: string, range: DateRange, storeId?: string): Promise<OverviewMetrics> {
     const where = this.buildReceiptWhere(tenantId, range, storeId);
 
-    const [sales, refunds, lineItemAgg, costCoverageAgg] = await Promise.all([
+    const [sales, refunds, lineItemAgg, costCoverageAgg, expenseAgg] = await Promise.all([
       this.prisma.receipt.aggregate({
         where: { ...where, type: 'sale' },
         _sum:   { subtotal: true, totalAmount: true, totalDiscount: true, totalTax: true },
@@ -80,6 +85,16 @@ export class DashboardService {
         where: { receipt: { ...where, type: 'sale' }, variant: { cost: { gt: 0 } } },
         _sum: { totalPrice: true },
       }),
+      // Despesas operacionais lançadas no DRE (aluguel, salários etc.) — mesma
+      // fonte usada em /api/dre, pra manter margem líquida consistente entre as duas telas.
+      this.prisma.expense.aggregate({
+        where: {
+          tenantId,
+          referenceDate: { gte: range.from, lte: range.to },
+          ...(storeId ? { storeId } : {}),
+        },
+        _sum: { amount: true },
+      }),
     ]);
 
     const grossRevenue = sales._sum.subtotal     ?? 0;   // preço cheio
@@ -90,6 +105,9 @@ export class DashboardService {
     const costTotal    = lineItemAgg._sum.totalCost ?? 0;
     const grossProfit  = revenueNet - costTotal;
     const grossMargin  = revenueNet > 0 ? (grossProfit / revenueNet) * 100 : 0;
+    const expensesTotal = expenseAgg._sum.amount ?? 0;
+    const netProfit     = grossProfit - expensesTotal;
+    const netMargin     = revenueNet > 0 ? (netProfit / revenueNet) * 100 : 0;
     const count        = sales._count.id;
     const refundsTotal = refunds._sum.totalAmount ?? 0;
     const avgTicket    = count > 0 ? Math.round(revenue / count) : 0;
@@ -120,6 +138,9 @@ export class DashboardService {
       costTotal,
       grossProfit,
       grossMarginPct:    Math.round(grossMargin * 10) / 10,
+      expensesTotal,
+      netProfit,
+      netMarginPct:      Math.round(netMargin * 10) / 10,
       transactionsCount: count,
       avgTicket,
       refundsTotal,

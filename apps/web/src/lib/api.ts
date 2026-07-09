@@ -86,6 +86,9 @@ class ApiClient {
       costTotal: number;
       grossProfit: number;
       grossMarginPct: number;
+      expensesTotal: number;
+      netProfit: number;
+      netMarginPct: number;
       transactionsCount: number;
       avgTicket: number;
       refundsTotal: number;
