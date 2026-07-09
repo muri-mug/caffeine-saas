@@ -45,6 +45,7 @@ export default function DashboardPage() {
     week:      t.dashboard.vsPrevWeek,
     days30:    t.dashboard.vsPrevMonth,
     month:     t.dashboard.vsPrevMonth,
+    custom:    t.dashboard.vsPrevPeriod,
   }[period];
 
   return (
